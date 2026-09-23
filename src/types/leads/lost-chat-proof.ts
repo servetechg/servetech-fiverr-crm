@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const lostChatProofSchema = z.object({
   kind: z.enum(["pdf", "images"]),
-  urls: z.array(z.string().url()).min(1).max(3),
+  urls: z.array(z.url()).min(1).max(3),
   publicIds: z.array(z.string().min(1)).min(1).max(3),
 });
 

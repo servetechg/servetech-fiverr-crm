@@ -25,7 +25,7 @@ export const leadListParamsSchema = z.object({
       }
       return value as LeadStatus;
     })
-    .pipe(z.nativeEnum(LeadStatus).optional()),
+    .pipe(z.enum(LeadStatus).optional()),
   priority: z
     .string()
     .optional()
@@ -35,7 +35,7 @@ export const leadListParamsSchema = z.object({
       }
       return value as LeadPriority;
     })
-    .pipe(z.nativeEnum(LeadPriority).optional()),
+    .pipe(z.enum(LeadPriority).optional()),
   fiverrAccountId: optionalInt,
   salespersonId: optionalInt,
   serviceId: optionalInt,

@@ -29,8 +29,8 @@ export const leadFormSchema = z
     fiverrAccountId: z.number().int().positive(),
     salespersonId: z.number().int().positive(),
     serviceId: z.number().int().positive(),
-    status: z.nativeEnum(LeadStatus),
-    priority: z.nativeEnum(LeadPriority),
+    status: z.enum(LeadStatus),
+    priority: z.enum(LeadPriority),
     estProjectValue: z.number().min(0),
     followUpDate: optionalDate,
     clientRequirement: z.string().trim().max(5000).optional(),
@@ -38,7 +38,7 @@ export const leadFormSchema = z
     lostReason: z.enum(LOST_REASON_VALUES).optional(),
     lostChatProof: lostChatProofSchema.nullable().optional(),
     orderValue: z.number().min(0).optional(),
-    orderStatus: z.nativeEnum(OrderStatus).optional(),
+    orderStatus: z.enum(OrderStatus).optional(),
     upsellEligible: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {

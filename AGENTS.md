@@ -16,15 +16,20 @@ Internal CRM for Fiverr sales: leads → orders → upsells, with RBAC (Admin / 
 
 | Command | Purpose |
 |---------|---------|
+| `npm run setup` | First-time local setup (.env, install, DB, seed) |
+| `npm run db:sync` | After pull: Docker up, `db push`, seed |
 | `npm run db:up` | Start MariaDB + Adminer (http://localhost:8080) |
-| `npm run db:migrate` | Apply Prisma migrations (dev) |
+| `npm run db:push` | Apply schema from `schema.prisma` (local dev) |
+| `npm run db:migrate` | Optional; needs shadow DB privileges (see `prisma/migrations/README.md`) |
 | `npm run db:seed` | Seed admin + sample data |
 | `npm run dev` | Next.js dev server |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` | Production build |
 
-Copy `.env.example` → `.env` before first run.
+Copy `.env.example` → `.env` before first run (or run `npm run setup`).
+
+Do not use deprecated APIs — see `.cursor/rules/no-deprecated-apis.mdc` and ESLint `@typescript-eslint/no-deprecated`.
 
 ## Demo login (after seed)
 
