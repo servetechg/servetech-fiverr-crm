@@ -1,14 +1,9 @@
-import { ModulePlaceholder } from "@/components/shared/module-placeholder";
-import { getModulePlaceholder } from "@/lib/utils/module-page";
+import { FiverrAccountsManager } from "@/components/modules/fiverr-accounts/fiverr-accounts-manager";
+import { requireAdminPage } from "@/lib/auth/require-admin-page";
+import { listFiverrAccounts } from "@/lib/queries/fiverr-accounts/list-fiverr-accounts";
 
-const meta = getModulePlaceholder("/fiverr-accounts");
-
-export default function FiverrAccountsPage() {
-  return (
-    <ModulePlaceholder
-      title={meta.title}
-      description={meta.description}
-      phaseLabel="Phase 3 — Admin master data"
-    />
-  );
+export default async function FiverrAccountsPage() {
+  await requireAdminPage();
+  const items = await listFiverrAccounts();
+  return <FiverrAccountsManager items={items} />;
 }

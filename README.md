@@ -25,5 +25,6 @@ MariaDB Adminer: [http://localhost:8080](http://localhost:8080) (server: `mariad
 
 ## Implementation status
 
-- **Phase 0–2 (done):** Tooling, Docker, Prisma schema, Auth.js, RBAC middleware, app shell, placeholder modules, shared UI primitives.
-- **Phase 3+:** Master data, Leads, Orders, Dashboard metrics (see module placeholder labels).
+- **Phase 0–2 (done):** Tooling, Docker, Prisma schema, Auth.js, RBAC middleware, app shell, shared UI primitives.
+- **Phase 3 (done):** Services, Fiverr Accounts, Sales Team — admin CRUD with Zod, services, Server Actions.
+- **Phase 4+:** Leads, Activities, Orders, Dashboard metrics (see remaining module placeholders).

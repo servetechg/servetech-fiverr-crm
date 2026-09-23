@@ -1,14 +1,9 @@
-import { ModulePlaceholder } from "@/components/shared/module-placeholder";
-import { getModulePlaceholder } from "@/lib/utils/module-page";
+import { SalesTeamManager } from "@/components/modules/sales-team/sales-team-manager";
+import { requireAdminPage } from "@/lib/auth/require-admin-page";
+import { listSalesTeam } from "@/lib/queries/sales-team/list-sales-team";
 
-const meta = getModulePlaceholder("/sales-team");
-
-export default function SalesTeamPage() {
-  return (
-    <ModulePlaceholder
-      title={meta.title}
-      description={meta.description}
-      phaseLabel="Phase 3 — User management"
-    />
-  );
+export default async function SalesTeamPage() {
+  await requireAdminPage();
+  const items = await listSalesTeam();
+  return <SalesTeamManager items={items} />;
 }
