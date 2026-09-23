@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { deleteTeamMemberAction, upsertTeamMemberAction } from "@/app/actions/sales-team";
 import { PageHeader } from "@/components/layout/page-header";
 import { ActiveStatusBadge } from "@/components/shared/active-status-badge";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTableShell } from "@/components/shared/data-table-shell";
 import { RowActions } from "@/components/shared/row-actions";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SalesTeamListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SalesTeamListItem | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<SalesTeamFormInput>({
@@ -95,7 +97,7 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
         cell: ({ row }) => (
           <RowActions
             onEdit={() => openEdit(row.original)}
-            onDelete={() => handleDelete(row.original)}
+            onDelete={() => setDeleteTarget(row.original)}
           />
         ),
       },
@@ -125,17 +127,18 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
     setOpen(true);
   }
 
-  function handleDelete(item: SalesTeamListItem): void {
-    if (!window.confirm(`Delete team member "${item.fullName}"?`)) {
+  function confirmDelete(): void {
+    if (!deleteTarget) {
       return;
     }
     startTransition(async () => {
-      const result = await deleteTeamMemberAction({ id: item.id });
+      const result = await deleteTeamMemberAction({ id: deleteTarget.id });
       if (!result.success) {
         toast.error(result.error);
         return;
       }
       toast.success("Team member deleted.");
+      setDeleteTarget(null);
       router.refresh();
     });
   }
@@ -174,18 +177,18 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
       <DataTableShell columns={columns} data={items} emptyMessage="No team members yet." />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="glass-surface max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit team member" : "Add team member"}</DialogTitle>
           </DialogHeader>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="fullName">Full name</Label>
-              <Input id="fullName" className="glass-inset rounded-xl" {...form.register("fullName")} />
+              <Input id="fullName" {...form.register("fullName")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" className="glass-inset rounded-xl" {...form.register("email")} />
+              <Input id="email" type="email" {...form.register("email")} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -196,7 +199,7 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
                     form.setValue("role", value as SalesTeamFormInput["role"])
                   }
                 >
-                  <SelectTrigger className="glass-inset rounded-xl">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -211,7 +214,7 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
                   value={isActiveValue ? "true" : "false"}
                   onValueChange={(value) => form.setValue("isActive", value === "true")}
                 >
-                  <SelectTrigger className="glass-inset rounded-xl">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -228,7 +231,6 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
                 type="number"
                 min={0}
                 step="0.01"
-                className="glass-inset rounded-xl"
                 {...form.register("monthlyTarget", { valueAsNumber: true })}
               />
             </div>
@@ -240,7 +242,6 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                className="glass-inset rounded-xl"
                 {...form.register("password")}
               />
             </div>
@@ -250,7 +251,6 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
                 id="confirmPassword"
                 type="password"
                 autoComplete="new-password"
-                className="glass-inset rounded-xl"
                 {...form.register("confirmPassword")}
               />
             </div>
@@ -265,6 +265,25 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+        title="Delete team member?"
+        description={
+          deleteTarget
+            ? `${deleteTarget.fullName} (${deleteTarget.email}) will be permanently removed. Assigned leads may block deletion.`
+            : ""
+        }
+        confirmLabel="Delete member"
+        destructive
+        loading={isPending}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

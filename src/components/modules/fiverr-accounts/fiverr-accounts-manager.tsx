@@ -14,6 +14,7 @@ import {
 } from "@/app/actions/fiverr-accounts";
 import { PageHeader } from "@/components/layout/page-header";
 import { ActiveStatusBadge } from "@/components/shared/active-status-badge";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTableShell } from "@/components/shared/data-table-shell";
 import { RowActions } from "@/components/shared/row-actions";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FiverrAccountListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<FiverrAccountListItem | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<FiverrAccountFormInput>({
@@ -93,7 +95,7 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
         cell: ({ row }) => (
           <RowActions
             onEdit={() => openEdit(row.original)}
-            onDelete={() => handleDelete(row.original)}
+            onDelete={() => setDeleteTarget(row.original)}
           />
         ),
       },
@@ -119,17 +121,18 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
     setOpen(true);
   }
 
-  function handleDelete(item: FiverrAccountListItem): void {
-    if (!window.confirm(`Delete Fiverr account "${item.accountName}"?`)) {
+  function confirmDelete(): void {
+    if (!deleteTarget) {
       return;
     }
     startTransition(async () => {
-      const result = await deleteFiverrAccountAction({ id: item.id });
+      const result = await deleteFiverrAccountAction({ id: deleteTarget.id });
       if (!result.success) {
         toast.error(result.error);
         return;
       }
       toast.success("Account deleted.");
+      setDeleteTarget(null);
       router.refresh();
     });
   }
@@ -163,7 +166,7 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
       <DataTableShell columns={columns} data={items} emptyMessage="No Fiverr accounts yet." />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="glass-surface rounded-2xl sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit account" : "Add account"}</DialogTitle>
           </DialogHeader>
@@ -172,7 +175,6 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
               <Label htmlFor="accountName">Account name</Label>
               <Input
                 id="accountName"
-                className="glass-inset rounded-xl"
                 {...form.register("accountName")}
               />
             </div>
@@ -180,7 +182,6 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
               <Label htmlFor="profileUrl">Profile URL</Label>
               <Input
                 id="profileUrl"
-                className="glass-inset rounded-xl"
                 placeholder="https://www.fiverr.com/..."
                 {...form.register("profileUrl")}
               />
@@ -191,7 +192,7 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
                 value={isActiveValue ? "true" : "false"}
                 onValueChange={(value) => form.setValue("isActive", value === "true")}
               >
-                <SelectTrigger className="glass-inset rounded-xl">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,6 +212,25 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+        title="Delete Fiverr account?"
+        description={
+          deleteTarget
+            ? `"${deleteTarget.accountName}" will be permanently removed. Linked leads or orders may block deletion.`
+            : ""
+        }
+        confirmLabel="Delete account"
+        destructive
+        loading={isPending}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

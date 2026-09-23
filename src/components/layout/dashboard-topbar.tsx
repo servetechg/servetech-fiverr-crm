@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { DateRangeFilter } from "@/components/layout/date-range-filter";
+import { TopbarDateRangeSlot } from "@/components/layout/topbar-date-range-slot";
 import { ModuleNavTabs } from "@/components/layout/module-nav-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SessionUser } from "@/types/common/session-user";
@@ -19,7 +19,7 @@ export function DashboardTopbar({ user }: DashboardTopbarProps) {
             <Skeleton className="h-9 w-full rounded-full lg:ml-auto lg:w-[11.25rem]" />
           }
         >
-          <DateRangeFilter />
+          <TopbarDateRangeSlot />
         </Suspense>
       </div>
     </header>

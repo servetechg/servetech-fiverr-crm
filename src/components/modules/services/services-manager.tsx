@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { deleteServiceAction, upsertServiceAction } from "@/app/actions/services";
 import { PageHeader } from "@/components/layout/page-header";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTableShell } from "@/components/shared/data-table-shell";
 import { RowActions } from "@/components/shared/row-actions";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export function ServicesManager({ items }: ServicesManagerProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ServiceListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ServiceListItem | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<ServiceFormInput>({
@@ -65,7 +67,7 @@ export function ServicesManager({ items }: ServicesManagerProps) {
         cell: ({ row }) => (
           <RowActions
             onEdit={() => openEdit(row.original)}
-            onDelete={() => handleDelete(row.original)}
+            onDelete={() => setDeleteTarget(row.original)}
           />
         ),
       },
@@ -91,17 +93,18 @@ export function ServicesManager({ items }: ServicesManagerProps) {
     setOpen(true);
   }
 
-  function handleDelete(item: ServiceListItem): void {
-    if (!window.confirm(`Delete service "${item.serviceName}"?`)) {
+  function confirmDelete(): void {
+    if (!deleteTarget) {
       return;
     }
     startTransition(async () => {
-      const result = await deleteServiceAction({ id: item.id });
+      const result = await deleteServiceAction({ id: deleteTarget.id });
       if (!result.success) {
         toast.error(result.error);
         return;
       }
       toast.success("Service deleted.");
+      setDeleteTarget(null);
       router.refresh();
     });
   }
@@ -142,21 +145,21 @@ export function ServicesManager({ items }: ServicesManagerProps) {
       <DataTableShell columns={columns} data={items} emptyMessage="No services yet." />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="glass-surface rounded-2xl sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit service" : "Add service"}</DialogTitle>
           </DialogHeader>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="serviceName">Service name</Label>
-              <Input id="serviceName" className="glass-inset rounded-xl" {...form.register("serviceName")} />
+              <Input id="serviceName" {...form.register("serviceName")} />
               {form.formState.errors.serviceName?.message && (
                 <p className="text-xs text-destructive">{form.formState.errors.serviceName.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Input id="category" className="glass-inset rounded-xl" {...form.register("category")} />
+              <Input id="category" {...form.register("category")} />
               {form.formState.errors.category?.message && (
                 <p className="text-xs text-destructive">{form.formState.errors.category.message}</p>
               )}
@@ -168,7 +171,6 @@ export function ServicesManager({ items }: ServicesManagerProps) {
                 type="number"
                 min={0}
                 step="0.01"
-                className="glass-inset rounded-xl"
                 {...form.register("defaultBasePrice", { valueAsNumber: true })}
               />
               {form.formState.errors.defaultBasePrice?.message && (
@@ -188,6 +190,25 @@ export function ServicesManager({ items }: ServicesManagerProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+        title="Delete service?"
+        description={
+          deleteTarget
+            ? `"${deleteTarget.serviceName}" will be permanently removed. Leads or orders linked to this service may block deletion.`
+            : ""
+        }
+        confirmLabel="Delete service"
+        destructive
+        loading={isPending}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

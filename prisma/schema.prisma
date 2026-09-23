@@ -126,7 +126,9 @@ model Lead {
   followUpDate      DateTime?    @map("follow_up_date") @db.Date
   clientRequirement String?      @map("client_requirement") @db.Text
   internalNotes     String?      @map("internal_notes") @db.Text
-  lostReason        String?      @map("lost_reason") @db.Text
+  lostReason        String?      @map("lost_reason") @db.VarChar(255)
+  lostChatProof     Json?        @map("lost_chat_proof")
+  upsellEligible    Boolean      @default(false) @map("upsell_eligible")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
