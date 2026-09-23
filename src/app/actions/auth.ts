@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { signIn, signOut } from "@/auth";
+import { zodFieldErrors } from "@/lib/actions/zod-form-errors";
 import { loginSchema } from "@/lib/validations/auth/login-schema";
 import { actionFailure, type ActionResult, actionSuccess } from "@/types/common/action-result";
 
@@ -18,8 +19,7 @@ export async function loginAction(
 
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
-    const fieldErrors = parsed.error.flatten().fieldErrors;
-    return actionFailure("Invalid credentials.", fieldErrors);
+    return actionFailure("Invalid credentials.", zodFieldErrors(parsed.error));
   }
 
   const callbackUrl = formData.get("callbackUrl");
