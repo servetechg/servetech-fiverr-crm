@@ -1,0 +1,13 @@
+---
+description: React UI patterns and shadcn usage
+globs: src/components/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# UI Components
+
+- shadcn primitives live in `src/components/ui` — do not fork without reason.
+- Feature UI: `src/components/modules/{module}/`. Shared: `src/components/shared`, layout: `src/components/layout`.
+- Keep business logic out of components; use Server Actions + props.
+- Reuse `PageHeader`, `DataTableShell`, `ModulePlaceholder` patterns before adding new shells.
+- Client components only when needed (forms, tables, filters).

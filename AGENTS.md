@@ -7,3 +7,37 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# ServeTech Global — Fiverr CRM
+
+Internal CRM for Fiverr sales: leads → orders → upsells, with RBAC (Admin / Salesperson).
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `npm run db:up` | Start MariaDB + Adminer (http://localhost:8080) |
+| `npm run db:migrate` | Apply Prisma migrations (dev) |
+| `npm run db:seed` | Seed admin + sample data |
+| `npm run dev` | Next.js dev server |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run build` | Production build |
+
+Copy `.env.example` → `.env` before first run.
+
+## Demo login (after seed)
+
+- **Admin:** `admin@servetech.global` / `Password123!`
+- **Sales:** `sales@servetech.global` / `Password123!`
+
+## Adding a new entity (checklist)
+
+1. Prisma model + migration
+2. `lib/validations/{entity}/`
+3. `lib/services/{entity}/`
+4. `app/actions/{entity}.ts`
+5. `types/{entity}/` for view types if needed
+6. Module page under `app/(dashboard)/`
+
+See `docs/architecture.md` and `.cursor/rules/`.

@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  Admin
+  Salesperson
+}
+
+enum LeadStatus {
+  NewMessage           @map("New Message")
+  Replied              @map("Replied")
+  RequirementDiscussed   @map("Requirement Discussed")
+  QuoteSent            @map("Quote Sent")
+  FollowUpRequired     @map("Follow-up Required")
+  OrderReceived        @map("Order Received")
+  Completed            @map("Completed")
+  Lost                 @map("Lost")
+}
+
+enum LeadPriority {
+  Hot
+  Warm
+  Cold
+}
+
+enum ActivityType {
+  MessageSent      @map("Message Sent")
+  ClientReply      @map("Client Reply")
+  RequirementCall  @map("Requirement Call")
+  ProposalSent     @map("Proposal Sent")
+  CustomNote       @map("Custom Note")
+}
+
+enum OrderStatus {
+  New
+  QA
+  InProgress    @map("In Progress")
+  Active
+  Delivered
+  Completed
+  Cancelled
+  Refunded
+}
+
+enum UpsellStatus {
+  Offered
+  Interested
+  Accepted
+  Rejected
+}
+
+enum FollowUpStatus {
+  Pending
+  Completed
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  fullName       String   @map("full_name")
+  email          String   @unique
+  passwordHash   String   @map("password_hash")
+  role           UserRole @default(Salesperson)
+  monthlyTarget  Decimal  @default(0) @map("monthly_target") @db.Decimal(10, 2)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  leadsAssigned Lead[]     @relation("LeadSalesperson")
+  activities    Activity[]
+  followUps     FollowUp[] @relation("FollowUpSalesperson")
+  upsellsOffered Upsell[]  @relation("UpsellOfferedBy")
+  ordersAssigned Order[]   @relation("OrderSalesperson")
+
+  @@index([role])
+  @@map("users")
+}
+
+model FiverrAccount {
+  id          Int      @id @default(autoincrement())
+  accountName String   @unique @map("account_name")
+  profileUrl  String?  @map("profile_url") @db.VarChar(500)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  leads  Lead[]
+  orders Order[]
+
+  @@map("fiverr_accounts")
+}
+
+model Service {
+  id               Int      @id @default(autoincrement())
+  serviceName      String   @unique @map("service_name")
+  category         String   @db.VarChar(100)
+  defaultBasePrice Decimal? @default(0) @map("default_base_price") @db.Decimal(10, 2)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  leads  Lead[]
+  orders Order[]
+
+  @@map("services")
+}
+
+model Lead {
+  id                Int          @id @default(autoincrement())
+  leadCustomId      String       @unique @map("lead_custom_id") @db.VarChar(50)
+  dateReceived      DateTime     @default(now()) @map("date_received") @db.Date
+  clientName        String?      @map("client_name")
+  fiverrUsername    String       @map("fiverr_username")
+  chatLink          String?      @map("chat_link") @db.VarChar(500)
+  fiverrAccountId   Int          @map("fiverr_account_id")
+  salespersonId     Int          @map("salesperson_id")
+  serviceId         Int          @map("service_id")
+  status            LeadStatus   @default(NewMessage)
+  priority          LeadPriority @default(Warm)
+  estProjectValue   Decimal      @default(0) @map("est_project_value") @db.Decimal(10, 2)
+  actualRevenue     Decimal      @default(0) @map("actual_revenue") @db.Decimal(10, 2)
+  followUpDate      DateTime?    @map("follow_up_date") @db.Date
+  clientRequirement String?      @map("client_requirement") @db.Text
+  internalNotes     String?      @map("internal_notes") @db.Text
+  lostReason        String?      @map("lost_reason") @db.Text
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  fiverrAccount FiverrAccount @relation(fields: [fiverrAccountId], references: [id], onDelete: Restrict)
+  salesperson   User          @relation("LeadSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict)
+  service       Service       @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  activities    Activity[]
+  orders        Order[]
+  followUps     FollowUp[]
+  upsells       Upsell[]
+
+  @@index([status])
+  @@index([salespersonId])
+  @@index([fiverrAccountId])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model Activity {
+  id           Int          @id @default(autoincrement())
+  leadId       Int          @map("lead_id")
+  userId       Int          @map("user_id")
+  activityType ActivityType @default(CustomNote) @map("activity_type")
+  notes        String       @db.Text
+  activityTime DateTime     @default(now()) @map("activity_time")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([leadId])
+  @@map("activities")
+}
+
+model Order {
+  id                 Int         @id @default(autoincrement())
+  orderNumber        String      @unique @map("order_number") @db.VarChar(100)
+  leadId             Int         @map("lead_id")
+  fiverrAccountId    Int         @map("fiverr_account_id")
+  salespersonId      Int         @map("salesperson_id")
+  serviceId          Int         @map("service_id")
+  frontRevenue       Decimal     @default(0) @map("front_revenue") @db.Decimal(10, 2)
+  orderDate          DateTime    @default(now()) @map("order_date") @db.Date
+  deliveryDate       DateTime    @map("delivery_date") @db.Date
+  status             OrderStatus @default(New)
+  productionAssigned String?     @map("production_assigned") @db.VarChar(100)
+  reviewReceived     Boolean     @default(false) @map("review_received")
+  notes              String?     @db.Text
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+
+  lead          Lead          @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  fiverrAccount FiverrAccount @relation(fields: [fiverrAccountId], references: [id], onDelete: Restrict)
+  salesperson   User          @relation("OrderSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict)
+  service       Service       @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  upsells       Upsell[]
+  followUps     FollowUp[]
+
+  @@index([leadId])
+  @@index([status])
+  @@map("orders")
+}
+
+model Upsell {
+  id                Int          @id @default(autoincrement())
+  leadId            Int          @map("lead_id")
+  orderId           Int?         @map("order_id")
+  offeredById       Int          @map("offered_by_id")
+  upsellDescription String       @map("upsell_description") @db.VarChar(255)
+  upsellAmount      Decimal      @default(0) @map("upsell_amount") @db.Decimal(10, 2)
+  dateOffered       DateTime     @default(now()) @map("date_offered") @db.Date
+  status            UpsellStatus @default(Offered)
+  rejectionReason   String?      @map("rejection_reason") @db.VarChar(255)
+  notes             String?      @db.Text
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  lead      Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  order     Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  offeredBy User   @relation("UpsellOfferedBy", fields: [offeredById], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([leadId])
+  @@index([status])
+  @@map("upsells")
+}
+
+model FollowUp {
+  id             Int            @id @default(autoincrement())
+  leadId         Int?           @map("lead_id")
+  orderId        Int?           @map("order_id")
+  salespersonId  Int            @map("salesperson_id")
+  description    String         @db.Text
+  scheduledTime  DateTime       @map("scheduled_time")
+  status         FollowUpStatus @default(Pending)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  lead        Lead?  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  order       Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  salesperson User   @relation("FollowUpSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict)
+
+  @@index([scheduledTime, status])
+  @@index([salespersonId])
+  @@map("follow_ups")
+}

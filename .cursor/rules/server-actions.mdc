@@ -1,0 +1,14 @@
+---
+description: Server Action conventions
+globs: src/app/actions/**/*.ts
+alwaysApply: false
+---
+
+# Server Actions
+
+1. `"use server"` at file top.
+2. Parse input with Zod (`safeParse`); return `actionFailure` with `fieldErrors` when invalid.
+3. Call `requireSessionUser()` / `requireAdminUser()` before work.
+4. Delegate to `lib/services`; do not call Prisma directly for domain mutations.
+5. `revalidatePath` / `revalidateTag` after successful writes.
+6. Never leak stack traces to clients — generic messages only.

@@ -1,0 +1,12 @@
+---
+description: RBAC and data scoping
+alwaysApply: true
+---
+
+# Security & RBAC
+
+- Roles: `Admin`, `Salesperson` only.
+- Salesperson: read/write **assigned** leads and related orders, upsells, activities, follow-ups.
+- Admin-only modules: fiverr-accounts, sales-team, services, reports, settings.
+- Every list query for salesperson must include scope in the **service/query layer**, not only hidden nav links.
+- Hash passwords with bcrypt (cost 12+) before storage; never log credentials or `AUTH_SECRET`.

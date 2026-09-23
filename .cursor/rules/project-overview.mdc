@@ -1,0 +1,13 @@
+---
+description: ServeTech CRM stack, layers, and module map
+alwaysApply: true
+---
+
+# ServeTech Global Fiverr CRM
+
+- **Stack:** Next.js App Router, Auth.js JWT, MariaDB, Prisma, Zod, shadcn/ui, Tailwind.
+- **Put mutations in** `src/app/actions` → `src/lib/services` → Prisma. **Reads** for dashboards/reports in `src/lib/queries`.
+- **Validations:** `src/lib/validations/{module}/`. Infer types with `z.infer`; do not duplicate in `types/` unless view-only.
+- **RBAC:** Admin vs Salesperson — enforce in services, not only UI. Admin-only routes listed in `src/lib/auth/rbac.ts`.
+- **UI theme:** [Customer Journey CRM (Dribbble)](https://dribbble.com/shots/24659454-Customer-Journey-CRM-Dashboard) — mesh canvas, **glass/blur panels**, floating sidebar, mac window chrome, pill tabs, **accent `#C3F53C`**, logo at `/brand/servetechLogo.png`. Mobile: sheet sidebar + scrollable module tabs.
+- See `docs/architecture.md` and `AGENTS.md` for commands and onboarding.

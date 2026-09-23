@@ -1,0 +1,12 @@
+---
+description: Strict TypeScript — no any, typed action results
+alwaysApply: true
+---
+
+# TypeScript
+
+- Never use `any`, `@ts-ignore`, or `@ts-expect-error` without a linked issue.
+- Use `ActionResult<T>` from `@/types/common/action-result` for Server Actions.
+- Prefer `type` imports: `import type { Foo } from "..."`.
+- Use `unknown` + narrowing for external JSON/CSV, then Zod parse.
+- Enable safe patterns: optional chaining, explicit return types on exported service functions.
