@@ -26,7 +26,11 @@ const PRESET_LABELS: Record<DateRangePreset, string> = {
   custom: "Custom Range",
 };
 
-export function DateRangeFilter() {
+type DateRangeFilterProps = {
+  labeled?: boolean;
+};
+
+export function DateRangeFilter({ labeled = false }: DateRangeFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,13 +46,20 @@ export function DateRangeFilter() {
       params.delete("from");
       params.delete("to");
     }
-    router.replace(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return (
-    <Select value={value} onValueChange={(v) => onChange(v as DateRangePreset)}>
-      <SelectTrigger className="glass-inset h-9 w-[min(100%,10rem)] rounded-full border-white/50 text-sm font-medium shadow-none sm:w-[11.25rem]">
-        <SelectValue placeholder="Date range" />
+    <Select value={value} onValueChange={(v) => v && onChange(v as DateRangePreset)}>
+      <SelectTrigger className="glass-inset h-9 w-[min(100%,10rem)] rounded-full border-white/50 text-sm font-medium shadow-none sm:w-[12.5rem]">
+        {labeled ? (
+          <span className="flex min-w-0 items-center gap-1 truncate">
+            <span className="shrink-0 text-muted-foreground">Date:</span>
+            <span className="truncate font-medium text-foreground">{PRESET_LABELS[value]}</span>
+          </span>
+        ) : (
+          <SelectValue placeholder="Date range" />
+        )}
       </SelectTrigger>
       <SelectContent className="rounded-2xl">
         {DATE_RANGE_PRESETS.filter((preset) => preset !== "custom").map((preset) => (
