@@ -1,7 +1,10 @@
 export type FiverrAccountListItem = {
   id: number;
   accountName: string;
-  profileUrl: string | null;
+  accountOwner: string | null;
+  assignedTeam: string | null;
+  notes: string | null;
   isActive: boolean;
+  leadCount: number;
   createdAt: string;
 };

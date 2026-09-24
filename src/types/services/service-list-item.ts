@@ -1,7 +1,7 @@
 export type ServiceListItem = {
   id: number;
   serviceName: string;
-  category: string;
-  defaultBasePrice: number;
+  isActive: boolean;
+  leadCount: number;
   createdAt: string;
 };

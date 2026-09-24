@@ -15,8 +15,9 @@ export async function createService(user: SessionUser, input: ServiceFormInput):
   const created = await prisma.service.create({
     data: {
       serviceName: input.serviceName,
-      category: input.category,
-      defaultBasePrice: input.defaultBasePrice,
+      isActive: input.isActive,
+      category: "General",
+      defaultBasePrice: 0,
     },
   });
   return { id: created.id };
@@ -28,9 +29,16 @@ export async function updateService(user: SessionUser, input: ServiceFormInput &
     where: { id: input.id },
     data: {
       serviceName: input.serviceName,
-      category: input.category,
-      defaultBasePrice: input.defaultBasePrice,
+      isActive: input.isActive,
     },
+  });
+}
+
+export async function setServiceActive(user: SessionUser, id: number, isActive: boolean): Promise<void> {
+  assertAdmin(user);
+  await prisma.service.update({
+    where: { id },
+    data: { isActive },
   });
 }
 

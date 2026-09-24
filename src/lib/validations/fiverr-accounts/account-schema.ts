@@ -4,13 +4,9 @@ export const fiverrAccountFormSchema = z.object({
   id: z.number().int().positive().optional(),
   isActive: z.boolean(),
   accountName: z.string().trim().min(1, "Account name is required").max(255),
-  profileUrl: z
-    .string()
-    .trim()
-    .max(500)
-    .refine((value) => value === "" || z.url().safeParse(value).success, {
-      message: "Enter a valid URL",
-    }),
+  accountOwner: z.string().trim().max(255).optional(),
+  assignedTeam: z.string().trim().max(255).optional(),
+  notes: z.string().trim().max(5000).optional(),
 });
 
 export type FiverrAccountFormInput = z.infer<typeof fiverrAccountFormSchema>;

@@ -8,11 +8,17 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
-import { deleteServiceAction, upsertServiceAction } from "@/app/actions/services";
+import {
+  deleteServiceAction,
+  setServiceActiveAction,
+  upsertServiceAction,
+} from "@/app/actions/services";
 import { PageHeader } from "@/components/layout/page-header";
+import { ActiveStatusBadge } from "@/components/shared/active-status-badge";
+import { AdminSearchInput } from "@/components/shared/admin-search-input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTableShell } from "@/components/shared/data-table-shell";
-import { RowActions } from "@/components/shared/row-actions";
+import { ListPagination } from "@/components/shared/list-pagination";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,27 +29,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatCurrency } from "@/lib/utils/format";
 import {
   serviceFormSchema,
   type ServiceFormInput,
 } from "@/lib/validations/services/service-schema";
+import type { PaginatedResult } from "@/types/common/pagination";
 import type { ServiceListItem } from "@/types/services/service-list-item";
 
 type ServicesManagerProps = {
-  items: ServiceListItem[];
+  data: PaginatedResult<ServiceListItem>;
 };
 
 const emptyForm: ServiceFormInput = {
   serviceName: "",
-  category: "",
-  defaultBasePrice: 0,
+  isActive: true,
 };
 
-export function ServicesManager({ items }: ServicesManagerProps) {
+export function ServicesManager({ data }: ServicesManagerProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<ServiceListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ServiceListItem | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -52,44 +56,80 @@ export function ServicesManager({ items }: ServicesManagerProps) {
     defaultValues: emptyForm,
   });
 
+  const isActiveValue = form.watch("isActive");
+
   const columns = useMemo<ColumnDef<ServiceListItem, unknown>[]>(
     () => [
       { accessorKey: "serviceName", header: "Service" },
-      { accessorKey: "category", header: "Category" },
       {
-        accessorKey: "defaultBasePrice",
-        header: "Base price",
-        cell: ({ row }) => formatCurrency(row.original.defaultBasePrice),
+        accessorKey: "isActive",
+        header: "Status",
+        cell: ({ row }) => <ActiveStatusBadge isActive={row.original.isActive} />,
+      },
+      {
+        accessorKey: "leadCount",
+        header: "Leads using",
+        cell: ({ row }) => row.original.leadCount,
       },
       {
         id: "actions",
         header: () => <span className="sr-only">Actions</span>,
         cell: ({ row }) => (
-          <RowActions
-            onEdit={() => openEdit(row.original)}
-            onDelete={() => setDeleteTarget(row.original)}
-          />
+          <div className="flex flex-wrap justify-end gap-2">
+            {row.original.isActive ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full"
+                disabled={isPending}
+                onClick={() => toggleActive(row.original, false)}
+              >
+                Deactivate
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full"
+                disabled={isPending}
+                onClick={() => toggleActive(row.original, true)}
+              >
+                Activate
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="h-8 rounded-full"
+              onClick={() => setDeleteTarget(row.original)}
+            >
+              Delete
+            </Button>
+          </div>
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- openEdit/handleDelete stable per mount
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isPending toggles disable state
+    [isPending],
   );
 
-  function openCreate(): void {
-    setEditing(null);
-    form.reset(emptyForm);
-    setOpen(true);
+  function toggleActive(item: ServiceListItem, isActive: boolean): void {
+    startTransition(async () => {
+      const result = await setServiceActiveAction({ id: item.id, isActive });
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(isActive ? "Service activated." : "Service deactivated.");
+      router.refresh();
+    });
   }
 
-  function openEdit(item: ServiceListItem): void {
-    setEditing(item);
-    form.reset({
-      id: item.id,
-      serviceName: item.serviceName,
-      category: item.category,
-      defaultBasePrice: item.defaultBasePrice,
-    });
+  function openCreate(): void {
+    form.reset(emptyForm);
     setOpen(true);
   }
 
@@ -123,7 +163,7 @@ export function ServicesManager({ items }: ServicesManagerProps) {
         }
         return;
       }
-      toast.success(editing ? "Service updated." : "Service created.");
+      toast.success("Service created.");
       setOpen(false);
       router.refresh();
     });
@@ -133,21 +173,32 @@ export function ServicesManager({ items }: ServicesManagerProps) {
     <div className="space-y-6">
       <PageHeader
         title="Services"
-        description="Service catalog for leads and orders."
+        description="Configurable list of services offered on Fiverr."
         actions={
           <Button type="button" className="rounded-full" onClick={openCreate}>
             <Plus className="size-4" />
-            Add service
+            Add Service
           </Button>
         }
       />
 
-      <DataTableShell columns={columns} data={items} emptyMessage="No services yet." />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <AdminSearchInput placeholder="Search services…" />
+        <p className="text-sm text-muted-foreground sm:ml-auto">{data.total} records</p>
+      </div>
+
+      <DataTableShell columns={columns} data={data.items} emptyMessage="No services match your search." />
+      <ListPagination
+        page={data.page}
+        totalPages={data.totalPages}
+        total={data.total}
+        entitySingular="service"
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit service" : "Add service"}</DialogTitle>
+            <DialogTitle>Add Service</DialogTitle>
           </DialogHeader>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
@@ -157,28 +208,15 @@ export function ServicesManager({ items }: ServicesManagerProps) {
                 <p className="text-xs text-destructive">{form.formState.errors.serviceName.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input id="category" {...form.register("category")} />
-              {form.formState.errors.category?.message && (
-                <p className="text-xs text-destructive">{form.formState.errors.category.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="defaultBasePrice">Default base price (USD)</Label>
-              <Input
-                id="defaultBasePrice"
-                type="number"
-                min={0}
-                step="0.01"
-                {...form.register("defaultBasePrice", { valueAsNumber: true })}
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4 rounded border-input accent-[#C3F53C]"
+                checked={isActiveValue}
+                onChange={(event) => form.setValue("isActive", event.target.checked)}
               />
-              {form.formState.errors.defaultBasePrice?.message && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.defaultBasePrice.message}
-                </p>
-              )}
-            </div>
+              Active
+            </label>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="ghost" className="rounded-full" onClick={() => setOpen(false)}>
                 Cancel
@@ -193,8 +231,8 @@ export function ServicesManager({ items }: ServicesManagerProps) {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) {
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
             setDeleteTarget(null);
           }
         }}
