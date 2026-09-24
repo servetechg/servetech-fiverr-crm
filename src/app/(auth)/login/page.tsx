@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/modules/auth/login-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { siteConfig } from "@/config/site";
 
 type LoginPageProps = {
@@ -13,29 +13,28 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const callbackUrl = params.callbackUrl?.startsWith("/") ? params.callbackUrl : "/";
 
   return (
-    <Card className="glass-surface rounded-[1.75rem] border-white/60 shadow-[0_24px_60px_rgb(20_20_20_/0.1)] sm:rounded-[2rem]">
-      <CardHeader className="space-y-4 p-6 pb-4 text-center sm:p-8">
-        <Image
-          src={siteConfig.logoSrc}
-          alt={siteConfig.logoAlt}
-          width={200}
-          height={64}
-          priority
-          className="mx-auto h-12 w-auto max-w-[13rem] object-contain sm:h-14"
-        />
-        <CardTitle className="text-xl font-bold tracking-tight sm:text-2xl">
-          {siteConfig.productName}
-        </CardTitle>
-        <CardDescription className="text-sm leading-relaxed">
-          Customer journey sales workspace — sign in to continue
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">
-        <LoginForm callbackUrl={callbackUrl} />
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Demo: admin@servetech.global / Password123!
-        </p>
-      </CardContent>
-    </Card>
+    <div className="flex w-full flex-col items-center gap-5 sm:gap-6">
+      <Image
+        src={siteConfig.logoSrc}
+        alt={siteConfig.logoAlt}
+        width={220}
+        height={72}
+        priority
+        className="h-12 w-auto max-w-[14rem] object-contain sm:h-[3.25rem]"
+      />
+      <Card className="glass-surface w-full overflow-hidden rounded-[1.75rem] border-white/60 shadow-[0_24px_60px_rgb(20_20_20_/0.1)] ring-1 ring-white/40 sm:rounded-[2rem]">
+        <CardHeader className="space-y-1.5 p-6 pb-2 text-center sm:p-8 sm:pb-3">
+          <CardTitle className="text-xl font-bold tracking-tight sm:text-2xl">
+            {siteConfig.productName}
+          </CardTitle>
+          <CardDescription className="mx-auto max-w-[18rem] text-sm leading-relaxed text-foreground/65">
+            Customer journey sales workspace — sign in to continue
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-6 pb-7 sm:px-8 sm:pb-8">
+          <LoginForm callbackUrl={callbackUrl} />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -91,7 +91,7 @@ export function FiverrAccountsManager({ items }: FiverrAccountsManagerProps) {
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
+        header: "Action",
         cell: ({ row }) => (
           <RowActions
             onEdit={() => openEdit(row.original)}
