@@ -39,6 +39,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  ACTIVE_STATUS_SELECT_ITEMS,
+  activeStatusSelectValue,
+  parseActiveStatusSelectValue,
+} from "@/lib/constants/active-status-select";
+import {
   fiverrAccountFormSchema,
   type FiverrAccountFormInput,
 } from "@/lib/validations/fiverr-accounts/account-schema";
@@ -96,7 +101,7 @@ export function FiverrAccountsManager({ data }: FiverrAccountsManagerProps) {
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
+        header: "Action",
         cell: ({ row }) => (
           <RowActions
             onEdit={() => openEdit(row.original)}
@@ -205,15 +210,18 @@ export function FiverrAccountsManager({ data }: FiverrAccountsManagerProps) {
             <div className="space-y-2">
               <Label>Status</Label>
               <Select
-                value={isActiveValue ? "true" : "false"}
-                onValueChange={(value) => form.setValue("isActive", value === "true")}
+                items={ACTIVE_STATUS_SELECT_ITEMS}
+                value={activeStatusSelectValue(isActiveValue)}
+                onValueChange={(value) => {
+                  if (value) form.setValue("isActive", parseActiveStatusSelectValue(value));
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="true">Active</SelectItem>
-                  <SelectItem value="false">Inactive</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>

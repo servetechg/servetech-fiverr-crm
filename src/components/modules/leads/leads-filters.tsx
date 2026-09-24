@@ -1,49 +1,21 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { LeadPriority, LeadStatus } from "@prisma/client";
+import { BriefcaseBusiness, CalendarRange, CircleDot, Flame, Store, Users } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
 import { DateRangeFilter } from "@/components/layout/date-range-filter";
 import { LeadsSearchInput } from "@/components/modules/leads/leads-search-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
+import { FilterSelect, FilterSelectItem } from "@/components/shared/filter-select";
 import { LEAD_PRIORITY_LABELS, LEAD_PRIORITY_OPTIONS, LEAD_STATUS_LABELS, LEAD_STATUS_OPTIONS } from "@/lib/constants/leads";
-import type { LeadPriority, LeadStatus } from "@prisma/client";
-import type { LeadFilterOptions } from "@/types/leads/lead-filter-options";
 import type { SessionUser } from "@/types/common/session-user";
+import type { LeadFilterOptions } from "@/types/leads/lead-filter-options";
 
 type LeadsFiltersProps = {
   filterOptions: LeadFilterOptions;
   user: SessionUser;
 };
-
-type FilterSelectProps = {
-  label: string;
-  value: string;
-  displayValue: string;
-  onValueChange: (value: string) => void;
-  children: ReactNode;
-  className?: string;
-};
-
-function FilterSelect({ label, value, displayValue, onValueChange, children, className }: FilterSelectProps) {
-  return (
-    <Select value={value} onValueChange={(next) => next && onValueChange(next)}>
-      <SelectTrigger className={className ?? "glass-inset h-9 w-full rounded-full sm:w-[12.5rem]"}>
-        <span className="flex min-w-0 items-center gap-1 truncate text-sm">
-          <span className="shrink-0 text-muted-foreground">{label}:</span>
-          <span className="truncate font-medium text-foreground">{displayValue}</span>
-        </span>
-      </SelectTrigger>
-      <SelectContent className="rounded-2xl">{children}</SelectContent>
-    </Select>
-  );
-}
 
 export function LeadsFilters({ filterOptions, user }: LeadsFiltersProps) {
   const router = useRouter();
@@ -59,7 +31,7 @@ export function LeadsFilters({ filterOptions, user }: LeadsFiltersProps) {
       params.set(key, value);
     }
     params.set("page", "1");
-      startTransition(() => {
+    startTransition(() => {
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     });
   };
@@ -73,11 +45,11 @@ export function LeadsFilters({ filterOptions, user }: LeadsFiltersProps) {
   const statusDisplay =
     statusParam === "all"
       ? "All"
-      : LEAD_STATUS_LABELS[statusParam as LeadStatus] ?? statusParam;
+      : (LEAD_STATUS_LABELS[statusParam as LeadStatus] ?? statusParam);
   const priorityDisplay =
     priorityParam === "all"
       ? "All"
-      : LEAD_PRIORITY_LABELS[priorityParam as LeadPriority] ?? priorityParam;
+      : (LEAD_PRIORITY_LABELS[priorityParam as LeadPriority] ?? priorityParam);
   const accountDisplay =
     accountParam === "all"
       ? "All"
@@ -92,77 +64,89 @@ export function LeadsFilters({ filterOptions, user }: LeadsFiltersProps) {
       : (filterOptions.salespeople.find((option) => String(option.id) === repParam)?.label ?? "All");
 
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
-      <LeadsSearchInput />
-      <FilterSelect
-        label="Status"
-        value={statusParam}
-        displayValue={statusDisplay}
-        onValueChange={(value) => setParam("status", value)}
-      >
-        <SelectItem value="all">All statuses</SelectItem>
-        {LEAD_STATUS_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </FilterSelect>
-      <FilterSelect
-        label="Priority"
-        value={priorityParam}
-        displayValue={priorityDisplay}
-        onValueChange={(value) => setParam("priority", value)}
-        className="glass-inset h-9 w-full rounded-full sm:w-[11.5rem]"
-      >
-        <SelectItem value="all">All priorities</SelectItem>
-        {LEAD_PRIORITY_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </FilterSelect>
-      <FilterSelect
-        label="Account"
-        value={accountParam}
-        displayValue={accountDisplay}
-        onValueChange={(value) => setParam("fiverrAccountId", value)}
-      >
-        <SelectItem value="all">All accounts</SelectItem>
-        {filterOptions.fiverrAccounts.map((option) => (
-          <SelectItem key={option.id} value={String(option.id)}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </FilterSelect>
-      <FilterSelect
-        label="Service"
-        value={serviceParam}
-        displayValue={serviceDisplay}
-        onValueChange={(value) => setParam("serviceId", value)}
-      >
-        <SelectItem value="all">All services</SelectItem>
-        {filterOptions.services.map((option) => (
-          <SelectItem key={option.id} value={String(option.id)}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </FilterSelect>
-      {user.role === "Admin" && (
+    <div className="glass-surface rounded-2xl border-white/55 p-3 ring-1 ring-white/40 sm:rounded-[1.25rem] sm:p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+        <LeadsSearchInput />
         <FilterSelect
-          label="Rep"
-          value={repParam}
-          displayValue={repDisplay}
-          onValueChange={(value) => setParam("salespersonId", value)}
+          label="Status"
+          icon={CircleDot}
+          value={statusParam}
+          displayValue={statusDisplay}
+          isActive={statusParam !== "all"}
+          onValueChange={(value) => setParam("status", value)}
         >
-          <SelectItem value="all">All reps</SelectItem>
-          {filterOptions.salespeople.map((option) => (
-            <SelectItem key={option.id} value={String(option.id)}>
+          <FilterSelectItem value="all">All statuses</FilterSelectItem>
+          {LEAD_STATUS_OPTIONS.map((option) => (
+            <FilterSelectItem key={option.value} value={option.value}>
               {option.label}
-            </SelectItem>
+            </FilterSelectItem>
           ))}
         </FilterSelect>
-      )}
-      <DateRangeFilter labeled />
+        <FilterSelect
+          label="Priority"
+          icon={Flame}
+          value={priorityParam}
+          displayValue={priorityDisplay}
+          isActive={priorityParam !== "all"}
+          onValueChange={(value) => setParam("priority", value)}
+          className="sm:w-[11.5rem]"
+        >
+          <FilterSelectItem value="all">All priorities</FilterSelectItem>
+          {LEAD_PRIORITY_OPTIONS.map((option) => (
+            <FilterSelectItem key={option.value} value={option.value}>
+              {option.label}
+            </FilterSelectItem>
+          ))}
+        </FilterSelect>
+        <FilterSelect
+          label="Account"
+          icon={Store}
+          value={accountParam}
+          displayValue={accountDisplay}
+          isActive={accountParam !== "all"}
+          onValueChange={(value) => setParam("fiverrAccountId", value)}
+        >
+          <FilterSelectItem value="all">All accounts</FilterSelectItem>
+          {filterOptions.fiverrAccounts.map((option) => (
+            <FilterSelectItem key={option.id} value={String(option.id)}>
+              {option.label}
+            </FilterSelectItem>
+          ))}
+        </FilterSelect>
+        <FilterSelect
+          label="Service"
+          icon={BriefcaseBusiness}
+          value={serviceParam}
+          displayValue={serviceDisplay}
+          isActive={serviceParam !== "all"}
+          onValueChange={(value) => setParam("serviceId", value)}
+        >
+          <FilterSelectItem value="all">All services</FilterSelectItem>
+          {filterOptions.services.map((option) => (
+            <FilterSelectItem key={option.id} value={String(option.id)}>
+              {option.label}
+            </FilterSelectItem>
+          ))}
+        </FilterSelect>
+        {user.role === "Admin" ? (
+          <FilterSelect
+            label="Rep"
+            icon={Users}
+            value={repParam}
+            displayValue={repDisplay}
+            isActive={repParam !== "all"}
+            onValueChange={(value) => setParam("salespersonId", value)}
+          >
+            <FilterSelectItem value="all">All reps</FilterSelectItem>
+            {filterOptions.salespeople.map((option) => (
+              <FilterSelectItem key={option.id} value={String(option.id)}>
+                {option.label}
+              </FilterSelectItem>
+            ))}
+          </FilterSelect>
+        ) : null}
+        <DateRangeFilter labeled icon={CalendarRange} />
+      </div>
     </div>
   );
 }

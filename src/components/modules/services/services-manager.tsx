@@ -73,7 +73,7 @@ export function ServicesManager({ data }: ServicesManagerProps) {
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
+        header: "Action",
         cell: ({ row }) => (
           <div className="flex flex-wrap justify-end gap-2">
             {row.original.isActive ? (

@@ -114,14 +114,14 @@ export function IconSidebar({ user }: IconSidebarProps) {
                   type="submit"
                   variant="ghost"
                   size="icon"
-                  className="size-10 rounded-full text-muted-foreground hover:bg-white/55 hover:text-foreground"
+                  className="size-10 rounded-full cursor-pointer text-muted-foreground hover:bg-white/55 hover:text-foreground"
                   aria-label="Sign out"
                 >
-                  <LogOut className="size-[1.125rem]" strokeWidth={1.75} />
+                  <LogOut className="size-[1.125rem] cursor-pointer" strokeWidth={1.75} />
                 </Button>
               }
             />
-            <TooltipContent side="right">Sign out</TooltipContent>
+            <TooltipContent side="right" className="cursor-pointer">Sign out</TooltipContent>
           </Tooltip>
         </form>
       </div>

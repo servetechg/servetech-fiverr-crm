@@ -1,7 +1,9 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { FilterSelect, FilterSelectItem } from "@/components/shared/filter-select";
 import {
   DATE_RANGE_PRESETS,
   type DateRangePreset,
@@ -28,9 +30,10 @@ const PRESET_LABELS: Record<DateRangePreset, string> = {
 
 type DateRangeFilterProps = {
   labeled?: boolean;
+  icon?: LucideIcon;
 };
 
-export function DateRangeFilter({ labeled = false }: DateRangeFilterProps) {
+export function DateRangeFilter({ labeled = false, icon }: DateRangeFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -49,19 +52,36 @@ export function DateRangeFilter({ labeled = false }: DateRangeFilterProps) {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  if (labeled) {
+    return (
+      <FilterSelect
+        label="Date"
+        icon={icon}
+        value={value}
+        displayValue={PRESET_LABELS[value]}
+        isActive={value !== "last_30_days"}
+        onValueChange={(next) => onChange(next as DateRangePreset)}
+        className="w-[min(100%,10rem)] sm:w-[12.5rem]"
+      >
+        {DATE_RANGE_PRESETS.filter((preset) => preset !== "custom").map((preset) => (
+          <FilterSelectItem key={preset} value={preset}>
+            {PRESET_LABELS[preset]}
+          </FilterSelectItem>
+        ))}
+      </FilterSelect>
+    );
+  }
+
   return (
-    <Select value={value} onValueChange={(v) => v && onChange(v as DateRangePreset)}>
+    <Select
+      items={PRESET_LABELS}
+      value={value}
+      onValueChange={(v) => v && onChange(v as DateRangePreset)}
+    >
       <SelectTrigger className="glass-inset h-9 w-[min(100%,10rem)] rounded-full border-white/50 text-sm font-medium shadow-none sm:w-[12.5rem]">
-        {labeled ? (
-          <span className="flex min-w-0 items-center gap-1 truncate">
-            <span className="shrink-0 text-muted-foreground">Date:</span>
-            <span className="truncate font-medium text-foreground">{PRESET_LABELS[value]}</span>
-          </span>
-        ) : (
-          <SelectValue placeholder="Date range" />
-        )}
+        <SelectValue placeholder="Date range" />
       </SelectTrigger>
-      <SelectContent className="rounded-2xl">
+      <SelectContent align="start" side="bottom" alignItemWithTrigger={false}>
         {DATE_RANGE_PRESETS.filter((preset) => preset !== "custom").map((preset) => (
           <SelectItem key={preset} value={preset}>
             {PRESET_LABELS[preset]}
