@@ -146,7 +146,7 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
           page={data.page}
           totalPages={data.totalPages}
           total={data.total}
-          itemLabel="lead"
+          entitySingular="lead"
         />
       }
     />

@@ -10,6 +10,11 @@ function assertAdmin(user: SessionUser): void {
   }
 }
 
+function normalizeOptionalText(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : null;
+}
+
 export async function createFiverrAccount(
   user: SessionUser,
   input: FiverrAccountFormInput,
@@ -18,7 +23,9 @@ export async function createFiverrAccount(
   const created = await prisma.fiverrAccount.create({
     data: {
       accountName: input.accountName,
-      profileUrl: input.profileUrl && input.profileUrl.length > 0 ? input.profileUrl : null,
+      accountOwner: normalizeOptionalText(input.accountOwner),
+      assignedTeam: normalizeOptionalText(input.assignedTeam),
+      notes: normalizeOptionalText(input.notes),
       isActive: input.isActive,
     },
   });
@@ -34,7 +41,9 @@ export async function updateFiverrAccount(
     where: { id: input.id },
     data: {
       accountName: input.accountName,
-      profileUrl: input.profileUrl && input.profileUrl.length > 0 ? input.profileUrl : null,
+      accountOwner: normalizeOptionalText(input.accountOwner),
+      assignedTeam: normalizeOptionalText(input.assignedTeam),
+      notes: normalizeOptionalText(input.notes),
       isActive: input.isActive,
     },
   });

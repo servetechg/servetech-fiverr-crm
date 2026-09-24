@@ -11,15 +11,17 @@ type ListPaginationProps = {
   page: number;
   totalPages: number;
   total: number;
-  itemLabel?: string;
+  /** Singular noun for counts, e.g. "lead", "account", "service", "record" */
+  entitySingular?: string;
 };
 
 export function ListPagination({
   page,
   totalPages,
   total,
-  itemLabel = "result",
+  entitySingular = "lead",
 }: ListPaginationProps) {
+  const entityPlural = entitySingular === "record" ? "records" : `${entitySingular}s`;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -31,12 +33,13 @@ export function ListPagination({
   };
 
   const range = getPaginationRange(page, totalPages);
-  const pluralLabel = total === 1 ? itemLabel : `${itemLabel}s`;
 
   return (
     <>
       <p className="text-sm text-muted-foreground">
-        {total === 0 ? "No results" : `${total} ${pluralLabel}`}
+        {total === 0
+          ? "No results"
+          : `${total} ${total === 1 ? entitySingular : entityPlural} · Page ${page} of ${totalPages}`}
       </p>
       <nav
         className="flex flex-wrap items-center justify-center gap-1 sm:justify-end"

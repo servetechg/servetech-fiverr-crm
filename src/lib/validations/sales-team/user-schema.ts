@@ -10,6 +10,8 @@ export const salesTeamFormSchema = z
     role: userRoleSchema,
     monthlyTarget: z.number().min(0, "Target must be 0 or greater"),
     isActive: z.boolean(),
+    fiverrAccountIds: z.array(z.number().int().positive()),
+    notes: z.string().trim().max(5000).optional(),
     password: z.string().min(8, "Password must be at least 8 characters").optional(),
     confirmPassword: z.string().optional(),
   })

@@ -11,8 +11,11 @@ import { toast } from "sonner";
 import { deleteTeamMemberAction, upsertTeamMemberAction } from "@/app/actions/sales-team";
 import { PageHeader } from "@/components/layout/page-header";
 import { ActiveStatusBadge } from "@/components/shared/active-status-badge";
+import { AdminRoleFilter } from "@/components/shared/admin-role-filter";
+import { AdminSearchInput } from "@/components/shared/admin-search-input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTableShell } from "@/components/shared/data-table-shell";
+import { ListPagination } from "@/components/shared/list-pagination";
 import { RowActions } from "@/components/shared/row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,15 +35,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { USER_ROLE_LABELS } from "@/lib/constants/user-roles";
 import { formatCurrency } from "@/lib/utils/format";
 import {
   salesTeamFormSchema,
   type SalesTeamFormInput,
 } from "@/lib/validations/sales-team/user-schema";
-import type { SalesTeamListItem } from "@/types/sales-team/user-list-item";
+import type { PaginatedResult } from "@/types/common/pagination";
+import type { FiverrAccountOption, SalesTeamListItem } from "@/types/sales-team/user-list-item";
 
 type SalesTeamManagerProps = {
-  items: SalesTeamListItem[];
+  data: PaginatedResult<SalesTeamListItem>;
+  fiverrAccountOptions: FiverrAccountOption[];
 };
 
 const emptyForm: SalesTeamFormInput = {
@@ -49,11 +56,13 @@ const emptyForm: SalesTeamFormInput = {
   role: "Salesperson",
   monthlyTarget: 0,
   isActive: true,
+  fiverrAccountIds: [],
+  notes: "",
   password: "",
   confirmPassword: "",
 };
 
-export function SalesTeamManager({ items }: SalesTeamManagerProps) {
+export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManagerProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SalesTeamListItem | null>(null);
@@ -67,6 +76,7 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
 
   const roleValue = form.watch("role");
   const isActiveValue = form.watch("isActive");
+  const assignedIds = form.watch("fiverrAccountIds");
 
   const columns = useMemo<ColumnDef<SalesTeamListItem, unknown>[]>(
     () => [
@@ -77,19 +87,19 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
         header: "Role",
         cell: ({ row }) => (
           <Badge variant="outline" className="rounded-full">
-            {row.original.role}
+            {USER_ROLE_LABELS[row.original.role]}
           </Badge>
         ),
-      },
-      {
-        accessorKey: "monthlyTarget",
-        header: "Monthly target",
-        cell: ({ row }) => formatCurrency(row.original.monthlyTarget),
       },
       {
         accessorKey: "isActive",
         header: "Status",
         cell: ({ row }) => <ActiveStatusBadge isActive={row.original.isActive} />,
+      },
+      {
+        accessorKey: "monthlyTarget",
+        header: "Target",
+        cell: ({ row }) => formatCurrency(row.original.monthlyTarget),
       },
       {
         id: "actions",
@@ -102,9 +112,22 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers stable for table
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable row handlers
     [],
   );
+
+  function toggleAccountId(accountId: number): void {
+    const current = form.getValues("fiverrAccountIds");
+    if (current.includes(accountId)) {
+      form.setValue(
+        "fiverrAccountIds",
+        current.filter((id) => id !== accountId),
+        { shouldDirty: true },
+      );
+      return;
+    }
+    form.setValue("fiverrAccountIds", [...current, accountId], { shouldDirty: true });
+  }
 
   function openCreate(): void {
     setEditing(null);
@@ -121,6 +144,8 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
       role: item.role,
       monthlyTarget: item.monthlyTarget,
       isActive: item.isActive,
+      fiverrAccountIds: item.assignedFiverrAccountIds,
+      notes: item.notes ?? "",
       password: "",
       confirmPassword: "",
     });
@@ -165,25 +190,37 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
     <div className="space-y-6">
       <PageHeader
         title="Sales Team"
-        description="Users, roles, and monthly targets."
+        description="Everyone with access, their role, and monthly targets."
         actions={
           <Button type="button" className="rounded-full" onClick={openCreate}>
             <Plus className="size-4" />
-            Add member
+            Add Team Member
           </Button>
         }
       />
 
-      <DataTableShell columns={columns} data={items} emptyMessage="No team members yet." />
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <AdminSearchInput placeholder="Search name or email…" />
+        <AdminRoleFilter />
+        <p className="text-sm text-muted-foreground sm:ml-auto">{data.total} records</p>
+      </div>
+
+      <DataTableShell columns={columns} data={data.items} emptyMessage="No team members match your filters." />
+      <ListPagination
+        page={data.page}
+        totalPages={data.totalPages}
+        total={data.total}
+        entitySingular="record"
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit team member" : "Add team member"}</DialogTitle>
+            <DialogTitle>{editing ? "Edit Team Member" : "Add Team Member"}</DialogTitle>
           </DialogHeader>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full name</Label>
+              <Label htmlFor="fullName">Name</Label>
               <Input id="fullName" {...form.register("fullName")} />
             </div>
             <div className="space-y-2">
@@ -200,11 +237,11 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select…" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Salesperson">Salesperson</SelectItem>
+                    <SelectItem value="Salesperson">Sales person</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -219,9 +256,29 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="true">Active</SelectItem>
-                    <SelectItem value="false">Disabled</SelectItem>
+                    <SelectItem value="false">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Assigned Fiverr accounts</Label>
+              <div className="max-h-36 space-y-2 overflow-y-auto rounded-xl border border-[var(--field-border)] bg-[var(--field-bg)] p-3">
+                {fiverrAccountOptions.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No active Fiverr accounts yet.</p>
+                ) : (
+                  fiverrAccountOptions.map((account) => (
+                    <label key={account.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="size-4 rounded border-input accent-[#C3F53C]"
+                        checked={assignedIds.includes(account.id)}
+                        onChange={() => toggleAccountId(account.id)}
+                      />
+                      {account.accountName}
+                    </label>
+                  ))
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -254,6 +311,10 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
                 {...form.register("confirmPassword")}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea id="notes" rows={3} {...form.register("notes")} />
+            </div>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="ghost" className="rounded-full" onClick={() => setOpen(false)}>
                 Cancel
@@ -268,8 +329,8 @@ export function SalesTeamManager({ items }: SalesTeamManagerProps) {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) {
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
             setDeleteTarget(null);
           }
         }}
