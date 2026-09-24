@@ -103,7 +103,7 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
+        header: "Action",
         cell: ({ row }) => (
           <RowActions
             onEdit={() => openEdit(row.original)}

@@ -10,6 +10,7 @@ import { LeadPriorityBadge, LeadStatusBadge } from "@/components/modules/leads/l
 import { DataTableShell } from "@/components/shared/data-table-shell";
 import { ListPagination } from "@/components/shared/list-pagination";
 import { RowActions } from "@/components/shared/row-actions";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatCurrency } from "@/lib/utils/format";
 import type { PaginatedResult } from "@/types/common/pagination";
 import type { LeadListItem } from "@/types/leads/lead-list-item";
@@ -17,6 +18,34 @@ import type { LeadListItem } from "@/types/leads/lead-list-item";
 type LeadsTableViewProps = {
   data: PaginatedResult<LeadListItem>;
 };
+
+function clientInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function ClientCell({ item }: { item: LeadListItem }) {
+  const display = item.clientName ?? item.fiverrUsername;
+  return (
+    <div className="flex min-w-[10rem] items-center gap-3">
+      <Avatar size="sm">
+        <AvatarFallback className="bg-primary/20 text-[10px] font-semibold text-foreground">
+          {clientInitials(display)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">{display}</p>
+        {item.clientName ? (
+          <p className="truncate text-xs text-muted-foreground">@{item.fiverrUsername}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export function LeadsTableView({ data }: LeadsTableViewProps) {
   const { onEdit, onDelete } = useLeadsActions();
@@ -27,20 +56,36 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
         accessorKey: "leadCustomId",
         header: "Lead ID",
         cell: ({ row }) => (
-          <Link href={`/leads/${row.original.id}`} className="font-medium text-foreground hover:underline">
+          <Link
+            href={`/leads/${row.original.id}`}
+            className="font-medium text-foreground hover:text-foreground/80 hover:underline"
+          >
             {row.original.leadCustomId}
           </Link>
         ),
       },
-      { accessorKey: "dateReceived", header: "Date" },
       {
-        accessorKey: "clientName",
-        header: "Client",
-        cell: ({ row }) => row.original.clientName ?? row.original.fiverrUsername,
+        accessorKey: "dateReceived",
+        header: "Date",
       },
-      { accessorKey: "fiverrAccountName", header: "Account" },
-      { accessorKey: "salespersonName", header: "Rep" },
-      { accessorKey: "serviceName", header: "Service" },
+      {
+        id: "client",
+        header: "Client",
+        cell: ({ row }) => <ClientCell item={row.original} />,
+      },
+      {
+        accessorKey: "fiverrAccountName",
+        header: "Account",
+        cell: ({ row }) => row.original.fiverrAccountName,
+      },
+      {
+        accessorKey: "salespersonName",
+        header: "Rep",
+      },
+      {
+        accessorKey: "serviceName",
+        header: "Service",
+      },
       {
         accessorKey: "status",
         header: "Status",
@@ -54,12 +99,16 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
       {
         accessorKey: "estProjectValue",
         header: "Est. value",
-        cell: ({ row }) => formatCurrency(row.original.estProjectValue),
+        cell: ({ row }) => (
+          <span className="font-medium tabular-nums">{formatCurrency(row.original.estProjectValue)}</span>
+        ),
       },
       {
         accessorKey: "revenue",
         header: "Revenue",
-        cell: ({ row }) => formatCurrency(row.original.revenue),
+        cell: ({ row }) => (
+          <span className="font-medium tabular-nums">{formatCurrency(row.original.revenue)}</span>
+        ),
       },
       {
         id: "chatProof",
@@ -74,9 +123,10 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
+        header: "Action",
         cell: ({ row }) => (
           <RowActions
+            detailHref={`/leads/${row.original.id}`}
             onEdit={() => onEdit(row.original.id)}
             onDelete={() => onDelete(row.original)}
           />
@@ -87,9 +137,18 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
   );
 
   return (
-    <div className="space-y-4">
-      <DataTableShell columns={columns} data={data.items} emptyMessage="No leads match your filters." />
-      <ListPagination page={data.page} totalPages={data.totalPages} total={data.total} />
-    </div>
+    <DataTableShell
+      columns={columns}
+      data={data.items}
+      emptyMessage="No leads match your filters."
+      footer={
+        <ListPagination
+          page={data.page}
+          totalPages={data.totalPages}
+          total={data.total}
+          entitySingular="lead"
+        />
+      }
+    />
   );
 }

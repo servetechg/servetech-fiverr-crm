@@ -8,8 +8,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand-lime: var(--brand-lime);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -75,7 +75,7 @@
   --chart-3: #9ed629;
   --chart-4: #f97316;
   --chart-5: #737373;
-  --radius: 1rem;
+  --radius: 0.75rem;
   --sidebar: rgb(255 255 255 / 0.42);
   --sidebar-foreground: #2a2a2a;
   --sidebar-primary: #c3f53c;
@@ -128,7 +128,7 @@
     @apply bg-background text-foreground antialiased;
   }
   html {
-    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   }
 }
 
@@ -139,6 +139,70 @@
       radial-gradient(circle at 92% 8%, rgb(255 255 255 / 0.95), transparent 42%),
       radial-gradient(circle at 50% 100%, rgb(20 20 20 / 0.04), transparent 45%),
       linear-gradient(165deg, #eef0f3 0%, #f4f5f7 42%, #e8eaee 100%);
+  }
+
+  .login-page-shell {
+    background-color: #e9ebef;
+    isolation: isolate;
+  }
+
+  .loginpage-background {
+    pointer-events: none;
+    position: fixed;
+    z-index: 0;
+    top: -250px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    transform: skewY(-12deg);
+  }
+
+  .loginpage-grayBackground {
+    position: absolute;
+    top: -1000px;
+    right: 0;
+    left: 0;
+    height: 1698px;
+    transform-origin: 0%;
+    background:
+      radial-gradient(circle at 18% 22%, rgb(195 245 60 / 0.14), transparent 42%),
+      linear-gradient(180deg, #f8fafc 0%, #f7fafc 45%, #f2f4f8 100%);
+  }
+
+  .loginpage-verticalLine {
+    position: absolute;
+    top: -100vh;
+    right: auto;
+    bottom: -100vh;
+    width: 1px;
+    background-image: linear-gradient(#eceef4 49%, #eceef400 50%);
+    background-size: 1px 8px;
+  }
+
+  .loginpage-verticalLine--first {
+    left: calc(50% - 540px);
+  }
+
+  .loginpage-verticalLine--second {
+    left: calc(50% - 270px);
+  }
+
+  .loginpage-verticalLine--third {
+    left: 50%;
+  }
+
+  .loginpage-verticalLine--fourth {
+    left: calc(50% + 269px);
+  }
+
+  .loginpage-verticalLine--fifth {
+    left: calc(50% + 540px);
+  }
+
+  .loginpage-verticalLine--first,
+  .loginpage-verticalLine--fifth {
+    background: #eceef4;
   }
 
   .glass-surface {
@@ -218,7 +282,7 @@
   }
 
   .journey-panel {
-    @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] md:rounded-[2rem];
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg sm:rounded-xl md:rounded-xl;
     border: 1px solid rgb(255 255 255 / 0.62);
     background: rgb(255 255 255 / 0.46);
     box-shadow:
@@ -228,16 +292,25 @@
   }
 
   .journey-kpi-card {
-    @apply rounded-2xl border-0 shadow-none ring-1 ring-white/50;
+    @apply rounded-lg border-0 shadow-none ring-1 ring-white/50;
     background: rgb(255 255 255 / 0.42);
     box-shadow: 0 4px 20px rgb(20 20 20 / 0.04);
     backdrop-filter: blur(14px) saturate(150%);
   }
 
+  .data-table-panel {
+    @apply rounded-lg border border-border/80 bg-[rgb(255_255_255/0.92)] shadow-[0_8px_30px_rgb(20_20_20/0.04)];
+    backdrop-filter: blur(12px) saturate(160%);
+  }
+
+  .data-table-footer {
+    @apply flex flex-col gap-3 border-t border-border/70 bg-[rgb(255_255_255/0.55)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5;
+  }
+
   .icon-rail {
     min-height: calc(100svh - 1rem);
     border: 1px solid rgb(255 255 255 / 0.58);
-    border-radius: 1.75rem;
+    border-radius: 0.75rem;
     background: rgb(255 255 255 / 0.48);
     box-shadow: 0 12px 40px rgb(20 20 20 / 0.08);
     backdrop-filter: blur(24px) saturate(170%);
@@ -263,5 +336,35 @@
 @layer utilities {
   .motion-smooth {
     @apply transition-all duration-200 ease-out;
+  }
+
+  @keyframes select-dropdown-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, -8px, 0) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes select-dropdown-out {
+    from {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translate3d(0, -6px, 0) scale(0.98);
+    }
+  }
+
+  .animate-select-dropdown-in {
+    animation: select-dropdown-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-select-dropdown-out {
+    animation: select-dropdown-out 0.16s cubic-bezier(0.4, 0, 1, 1) both;
   }
 }
