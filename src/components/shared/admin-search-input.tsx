@@ -24,11 +24,15 @@ export function AdminSearchInput({
   const [, startTransition] = useTransition();
 
   const urlQuery = searchParams.get(paramKey) ?? "";
-  const [value, setValue] = useState(urlQuery);
+  const [localOverride, setLocalOverride] = useState<string | null>(null);
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery);
 
-  useEffect(() => {
-    setValue(urlQuery);
-  }, [urlQuery]);
+  if (urlQuery !== prevUrlQuery) {
+    setPrevUrlQuery(urlQuery);
+    setLocalOverride(null);
+  }
+
+  const value = localOverride ?? urlQuery;
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -56,7 +60,7 @@ export function AdminSearchInput({
       <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => setLocalOverride(event.target.value)}
         placeholder={placeholder}
         className="h-9 rounded-full pl-9 pr-9"
         aria-label="Search"
@@ -66,7 +70,7 @@ export function AdminSearchInput({
           type="button"
           className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
           aria-label="Clear search"
-          onClick={() => setValue("")}
+          onClick={() => setLocalOverride("")}
         >
           <X className="size-3.5" />
         </button>

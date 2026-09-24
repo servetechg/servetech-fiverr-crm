@@ -2,14 +2,9 @@ import { prisma } from "@/lib/db/prisma";
 import { canMutateLead } from "@/lib/auth/lead-scope";
 import { isAdmin } from "@/lib/auth/rbac";
 import type { FollowUpFormInput } from "@/lib/validations/follow-ups/follow-up-form-schema";
-import {
-  formatDateOnlyFromDb,
-  parseDateOnlyForDb,
-  parseOptionalDateOnly,
-} from "@/lib/utils/datetime";
+import { parseDateOnlyForDb, parseOptionalDateOnly } from "@/lib/utils/datetime";
 import type { FollowUpMoveInput } from "@/lib/validations/follow-ups/follow-up-move-schema";
 import type { SessionUser } from "@/types/common/session-user";
-import type { FollowUpListItem } from "@/types/follow-ups/follow-up-list-item";
 
 async function assertFollowUpAccess(user: SessionUser, followUpId: number): Promise<void> {
   const row = await prisma.followUp.findUnique({
@@ -89,33 +84,6 @@ export async function updateFollowUp(
 export async function deleteFollowUp(user: SessionUser, id: number): Promise<void> {
   await assertFollowUpAccess(user, id);
   await prisma.followUp.delete({ where: { id } });
-}
-
-function toListItem(row: {
-  id: number;
-  leadId: number;
-  salespersonId: number;
-  description: string;
-  scheduledTime: Date;
-  lastContactAt: Date | null;
-  status: FollowUpListItem["status"];
-  notes: string | null;
-  lead: { leadCustomId: string; clientName: string | null; fiverrUsername: string };
-  salesperson: { fullName: string };
-}): FollowUpListItem {
-  return {
-    id: row.id,
-    leadId: row.leadId,
-    leadCustomId: row.lead.leadCustomId,
-    clientLabel: row.lead.clientName ?? row.lead.fiverrUsername,
-    salespersonId: row.salespersonId,
-    salespersonName: row.salesperson.fullName,
-    description: row.description,
-    scheduledDate: formatDateOnlyFromDb(row.scheduledTime),
-    lastContactDate: row.lastContactAt ? formatDateOnlyFromDb(row.lastContactAt) : null,
-    status: row.status,
-    notes: row.notes,
-  };
 }
 
 export async function moveFollowUpBoard(
