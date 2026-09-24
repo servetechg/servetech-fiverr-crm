@@ -1,14 +1,26 @@
-import { ModulePlaceholder } from "@/components/shared/module-placeholder";
-import { getModulePlaceholder } from "@/lib/utils/module-page";
+import { redirect } from "next/navigation";
 
-const meta = getModulePlaceholder("/activities");
+import { ActivitiesManager } from "@/components/modules/activities/activities-manager";
+import { getSessionUser } from "@/lib/auth/session";
+import { getActivityFormOptions } from "@/lib/queries/activities/get-activity-form-options";
+import { listActivitiesPaginated } from "@/lib/queries/activities/list-activities";
+import { parseActivityListParams } from "@/lib/validations/activities/activity-list-params";
 
-export default function ActivitiesPage() {
-  return (
-    <ModulePlaceholder
-      title={meta.title}
-      description={meta.description}
-      phaseLabel="Phase 5 — Activity logging"
-    />
-  );
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function ActivitiesPage({ searchParams }: PageProps) {
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const params = parseActivityListParams(await searchParams);
+  const [data, formOptions] = await Promise.all([
+    listActivitiesPaginated(user, params),
+    getActivityFormOptions(user),
+  ]);
+
+  return <ActivitiesManager user={user} data={data} formOptions={formOptions} />;
 }

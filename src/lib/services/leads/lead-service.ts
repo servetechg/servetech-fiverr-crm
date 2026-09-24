@@ -52,6 +52,7 @@ async function logActivity(
       userId,
       notes,
       activityType,
+      direction: "Internal",
     },
   });
 }

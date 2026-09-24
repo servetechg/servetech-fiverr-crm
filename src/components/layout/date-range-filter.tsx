@@ -73,7 +73,11 @@ export function DateRangeFilter({ labeled = false, icon }: DateRangeFilterProps)
   }
 
   return (
-    <Select value={value} onValueChange={(v) => v && onChange(v as DateRangePreset)}>
+    <Select
+      items={PRESET_LABELS}
+      value={value}
+      onValueChange={(v) => v && onChange(v as DateRangePreset)}
+    >
       <SelectTrigger className="glass-inset h-9 w-[min(100%,10rem)] rounded-full border-white/50 text-sm font-medium shadow-none sm:w-[12.5rem]">
         <SelectValue placeholder="Date range" />
       </SelectTrigger>

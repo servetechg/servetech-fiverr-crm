@@ -36,6 +36,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  ACTIVE_STATUS_SELECT_ITEMS,
+  activeStatusSelectValue,
+  parseActiveStatusSelectValue,
+} from "@/lib/constants/active-status-select";
 import { USER_ROLE_LABELS } from "@/lib/constants/user-roles";
 import { formatCurrency } from "@/lib/utils/format";
 import {
@@ -231,6 +236,7 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
               <div className="space-y-2">
                 <Label>Role</Label>
                 <Select
+                  items={{ Admin: USER_ROLE_LABELS.Admin, Salesperson: USER_ROLE_LABELS.Salesperson }}
                   value={roleValue}
                   onValueChange={(value) =>
                     form.setValue("role", value as SalesTeamFormInput["role"])
@@ -248,15 +254,18 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                  value={isActiveValue ? "true" : "false"}
-                  onValueChange={(value) => form.setValue("isActive", value === "true")}
+                  items={ACTIVE_STATUS_SELECT_ITEMS}
+                  value={activeStatusSelectValue(isActiveValue)}
+                  onValueChange={(value) => {
+                    if (value) form.setValue("isActive", parseActiveStatusSelectValue(value));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">Active</SelectItem>
-                    <SelectItem value="false">Inactive</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
