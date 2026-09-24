@@ -30,11 +30,25 @@ enum LeadPriority {
 }
 
 enum ActivityType {
-  MessageSent      @map("Message Sent")
-  ClientReply      @map("Client Reply")
-  RequirementCall  @map("Requirement Call")
-  ProposalSent     @map("Proposal Sent")
-  CustomNote       @map("Custom Note")
+  ClientMessage      @map("Client Message")
+  SalesReply         @map("Sales Reply")
+  Requirement        @map("Requirement")
+  PriceDiscussion    @map("Price Discussion")
+  QuoteSent          @map("Quote Sent")
+  RevisionDiscussion @map("Revision Discussion")
+  UpsellOffered      @map("Upsell Offered")
+  FollowUp           @map("Follow-up")
+  OrderReceived      @map("Order Received")
+  OrderCompleted     @map("Order Completed")
+  OrderCancelled     @map("Order Cancelled")
+  Lost               @map("Lost")
+  CustomNote         @map("Custom Note")
+}
+
+enum ActivityDirection {
+  Incoming
+  Outgoing
+  Internal
 }
 
 enum OrderStatus {
@@ -57,6 +71,11 @@ enum UpsellStatus {
 
 enum FollowUpStatus {
   Pending
+  Contacted
+  Interested
+  Converted
+  NoResponse   @map("No Response")
+  Lost
   Completed
 }
 
@@ -166,18 +185,24 @@ model Lead {
 }
 
 model Activity {
-  id           Int          @id @default(autoincrement())
-  leadId       Int          @map("lead_id")
-  userId       Int          @map("user_id")
-  activityType ActivityType @default(CustomNote) @map("activity_type")
-  notes        String       @db.Text
-  activityTime DateTime     @default(now()) @map("activity_time")
-  createdAt    DateTime     @default(now()) @map("created_at")
+  id                  Int               @id @default(autoincrement())
+  leadId              Int               @map("lead_id")
+  userId              Int               @map("user_id")
+  activityType        ActivityType      @default(CustomNote) @map("activity_type")
+  direction           ActivityDirection @default(Internal)
+  messageCategory     String?           @map("message_category") @db.VarChar(255)
+  actionTaken         String?           @map("action_taken") @db.VarChar(500)
+  responseTimeMinutes Int?              @map("response_time_minutes")
+  upsellMentioned     Boolean           @default(false) @map("upsell_mentioned")
+  notes               String            @db.Text
+  activityTime        DateTime          @default(now()) @map("activity_time")
+  createdAt           DateTime          @default(now()) @map("created_at")
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@index([leadId])
+  @@index([activityTime])
   @@map("activities")
 }
 
@@ -236,17 +261,19 @@ model Upsell {
 
 model FollowUp {
   id             Int            @id @default(autoincrement())
-  leadId         Int?           @map("lead_id")
+  leadId         Int            @map("lead_id")
   orderId        Int?           @map("order_id")
   salespersonId  Int            @map("salesperson_id")
   description    String         @db.Text
-  scheduledTime  DateTime       @map("scheduled_time")
+  scheduledTime  DateTime       @map("scheduled_time") @db.Date
+  lastContactAt  DateTime?      @map("last_contact_at") @db.Date
   status         FollowUpStatus @default(Pending)
+  notes          String?        @db.Text
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
-  lead        Lead?  @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  order       Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  lead        Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  order       Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
   salesperson User   @relation("FollowUpSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict)
 
   @@index([scheduledTime, status])

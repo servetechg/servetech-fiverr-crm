@@ -1,14 +1,25 @@
-import { ModulePlaceholder } from "@/components/shared/module-placeholder";
-import { getModulePlaceholder } from "@/lib/utils/module-page";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-const meta = getModulePlaceholder("/follow-ups");
+import { FollowUpsManager } from "@/components/modules/follow-ups/follow-ups-manager";
+import { getSessionUser } from "@/lib/auth/session";
+import { getFollowUpFormOptions } from "@/lib/queries/follow-ups/get-follow-up-form-options";
+import { listFollowUps } from "@/lib/queries/follow-ups/list-follow-ups";
 
-export default function FollowUpsPage() {
+export default async function FollowUpsPage() {
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const [items, formOptions] = await Promise.all([
+    listFollowUps(user),
+    getFollowUpFormOptions(user),
+  ]);
+
   return (
-    <ModulePlaceholder
-      title={meta.title}
-      description={meta.description}
-      phaseLabel="Phase 5 — Follow-up queue"
-    />
+    <Suspense>
+      <FollowUpsManager user={user} items={items} formOptions={formOptions} />
+    </Suspense>
   );
 }

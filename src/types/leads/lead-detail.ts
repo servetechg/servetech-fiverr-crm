@@ -1,4 +1,4 @@
-import type { LeadPriority, LeadStatus, OrderStatus } from "@prisma/client";
+import type { ActivityType, LeadPriority, LeadStatus, OrderStatus } from "@prisma/client";
 
 import type { LostReasonValue } from "@/lib/constants/lost-reasons";
 import type { LostChatProof } from "@/types/leads/lost-chat-proof";
@@ -6,7 +6,7 @@ import type { LostChatProof } from "@/types/leads/lost-chat-proof";
 export type LeadActivityItem = {
   id: number;
   notes: string;
-  activityType: string;
+  activityType: ActivityType;
   activityTime: string;
   userName: string;
 };
