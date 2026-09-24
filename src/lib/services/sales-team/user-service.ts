@@ -11,6 +11,22 @@ function assertAdmin(user: SessionUser): void {
   }
 }
 
+function normalizeOptionalText(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : null;
+}
+
+async function syncAssignedAccounts(userId: number, fiverrAccountIds: number[]): Promise<void> {
+  await prisma.userFiverrAccount.deleteMany({ where: { userId } });
+  if (fiverrAccountIds.length === 0) {
+    return;
+  }
+  await prisma.userFiverrAccount.createMany({
+    data: fiverrAccountIds.map((fiverrAccountId) => ({ userId, fiverrAccountId })),
+    skipDuplicates: true,
+  });
+}
+
 export async function createTeamMember(
   user: SessionUser,
   input: SalesTeamFormInput,
@@ -21,6 +37,7 @@ export async function createTeamMember(
   }
 
   const passwordHash = await bcrypt.hash(input.password, 12);
+
   const created = await prisma.user.create({
     data: {
       fullName: input.fullName,
@@ -29,8 +46,11 @@ export async function createTeamMember(
       role: input.role,
       monthlyTarget: input.monthlyTarget,
       isActive: input.isActive,
+      notes: normalizeOptionalText(input.notes),
     },
   });
+
+  await syncAssignedAccounts(created.id, input.fiverrAccountIds);
   return { id: created.id };
 }
 
@@ -46,6 +66,7 @@ export async function updateTeamMember(
     role: SalesTeamFormInput["role"];
     monthlyTarget: number;
     isActive: boolean;
+    notes: string | null;
     passwordHash?: string;
   } = {
     fullName: input.fullName,
@@ -53,15 +74,28 @@ export async function updateTeamMember(
     role: input.role,
     monthlyTarget: input.monthlyTarget,
     isActive: input.isActive,
+    notes: normalizeOptionalText(input.notes),
   };
 
   if (input.password) {
     data.passwordHash = await bcrypt.hash(input.password, 12);
   }
 
-  await prisma.user.update({
-    where: { id: input.id },
-    data,
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: input.id },
+      data,
+    });
+    await tx.userFiverrAccount.deleteMany({ where: { userId: input.id } });
+    if (input.fiverrAccountIds.length > 0) {
+      await tx.userFiverrAccount.createMany({
+        data: input.fiverrAccountIds.map((fiverrAccountId) => ({
+          userId: input.id,
+          fiverrAccountId,
+        })),
+        skipDuplicates: true,
+      });
+    }
   });
 }
 

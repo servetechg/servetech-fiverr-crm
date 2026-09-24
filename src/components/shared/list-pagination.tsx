@@ -8,9 +8,17 @@ type ListPaginationProps = {
   page: number;
   totalPages: number;
   total: number;
+  /** Singular noun for counts, e.g. "lead", "account", "service", "record" */
+  entitySingular?: string;
 };
 
-export function ListPagination({ page, totalPages, total }: ListPaginationProps) {
+export function ListPagination({
+  page,
+  totalPages,
+  total,
+  entitySingular = "lead",
+}: ListPaginationProps) {
+  const entityPlural = entitySingular === "record" ? "records" : `${entitySingular}s`;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -24,7 +32,9 @@ export function ListPagination({ page, totalPages, total }: ListPaginationProps)
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground">
-        {total === 0 ? "No results" : `${total} lead${total === 1 ? "" : "s"} · Page ${page} of ${totalPages}`}
+        {total === 0
+          ? "No results"
+          : `${total} ${total === 1 ? entitySingular : entityPlural} · Page ${page} of ${totalPages}`}
       </p>
       <div className="flex gap-2">
         <Button

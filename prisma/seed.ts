@@ -30,26 +30,56 @@ async function main(): Promise<void> {
     },
   });
 
-  const accounts = ["Sabrina", "servetech02", "Dora Moore"];
-  for (const accountName of accounts) {
+  const accounts: {
+    accountName: string;
+    accountOwner?: string;
+    assignedTeam?: string;
+  }[] = [
+    { accountName: "Sabrina", accountOwner: "ServeTech Global", assignedTeam: "Team 2" },
+    { accountName: "servetech02", accountOwner: "ServeTech Global", assignedTeam: "Team 5" },
+    { accountName: "Dora Moore", accountOwner: "Fahad", assignedTeam: "Morning" },
+  ];
+  for (const account of accounts) {
     await prisma.fiverrAccount.upsert({
-      where: { accountName },
-      update: {},
-      create: { accountName, isActive: true },
+      where: { accountName: account.accountName },
+      update: {
+        accountOwner: account.accountOwner,
+        assignedTeam: account.assignedTeam,
+      },
+      create: {
+        accountName: account.accountName,
+        accountOwner: account.accountOwner,
+        assignedTeam: account.assignedTeam,
+        isActive: true,
+      },
     });
   }
 
-  const services = [
-    { serviceName: "WordPress", category: "Web Development", defaultBasePrice: 499 },
-    { serviceName: "Website Redesign", category: "Web Development", defaultBasePrice: 799 },
-    { serviceName: "Landing Page", category: "Web Development", defaultBasePrice: 399 },
+  const serviceNames = [
+    "WordPress",
+    "Elementor",
+    "Shopify",
+    "Custom Website",
+    "Website Redesign",
+    "Figma to WordPress",
+    "Landing Page",
+    "UX/UI",
+    "Website Maintenance",
+    "SEO",
+    "Website Speed Optimization",
+    "Hosting",
   ];
 
-  for (const service of services) {
+  for (const serviceName of serviceNames) {
     await prisma.service.upsert({
-      where: { serviceName: service.serviceName },
-      update: {},
-      create: service,
+      where: { serviceName },
+      update: { isActive: true },
+      create: {
+        serviceName,
+        category: "Web Development",
+        defaultBasePrice: 0,
+        isActive: true,
+      },
     });
   }
 

@@ -7,5 +7,13 @@ export type SalesTeamListItem = {
   role: UserRole;
   monthlyTarget: number;
   isActive: boolean;
+  assignedAccountNames: string[];
+  assignedFiverrAccountIds: number[];
+  notes: string | null;
   createdAt: string;
+};
+
+export type FiverrAccountOption = {
+  id: number;
+  accountName: string;
 };
