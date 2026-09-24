@@ -1,0 +1,95 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+
+import { useLeadsActions } from "@/components/modules/leads/leads-actions-context";
+import { ChatProofTableCell } from "@/components/modules/leads/chat-proof-table-cell";
+import { LeadPriorityBadge, LeadStatusBadge } from "@/components/modules/leads/lead-badges";
+import { DataTableShell } from "@/components/shared/data-table-shell";
+import { ListPagination } from "@/components/shared/list-pagination";
+import { RowActions } from "@/components/shared/row-actions";
+import { formatCurrency } from "@/lib/utils/format";
+import type { PaginatedResult } from "@/types/common/pagination";
+import type { LeadListItem } from "@/types/leads/lead-list-item";
+
+type LeadsTableViewProps = {
+  data: PaginatedResult<LeadListItem>;
+};
+
+export function LeadsTableView({ data }: LeadsTableViewProps) {
+  const { onEdit, onDelete } = useLeadsActions();
+
+  const columns = useMemo<ColumnDef<LeadListItem, unknown>[]>(
+    () => [
+      {
+        accessorKey: "leadCustomId",
+        header: "Lead ID",
+        cell: ({ row }) => (
+          <Link href={`/leads/${row.original.id}`} className="font-medium text-foreground hover:underline">
+            {row.original.leadCustomId}
+          </Link>
+        ),
+      },
+      { accessorKey: "dateReceived", header: "Date" },
+      {
+        accessorKey: "clientName",
+        header: "Client",
+        cell: ({ row }) => row.original.clientName ?? row.original.fiverrUsername,
+      },
+      { accessorKey: "fiverrAccountName", header: "Account" },
+      { accessorKey: "salespersonName", header: "Rep" },
+      { accessorKey: "serviceName", header: "Service" },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <LeadStatusBadge status={row.original.status} />,
+      },
+      {
+        accessorKey: "priority",
+        header: "Priority",
+        cell: ({ row }) => <LeadPriorityBadge priority={row.original.priority} />,
+      },
+      {
+        accessorKey: "estProjectValue",
+        header: "Est. value",
+        cell: ({ row }) => formatCurrency(row.original.estProjectValue),
+      },
+      {
+        accessorKey: "revenue",
+        header: "Revenue",
+        cell: ({ row }) => formatCurrency(row.original.revenue),
+      },
+      {
+        id: "chatProof",
+        header: "Chat proof",
+        cell: ({ row }) => (
+          <ChatProofTableCell
+            proof={row.original.lostChatProof}
+            leadCustomId={row.original.leadCustomId}
+            clientLabel={row.original.clientName ?? row.original.fiverrUsername}
+          />
+        ),
+      },
+      {
+        id: "actions",
+        header: () => <span className="sr-only">Actions</span>,
+        cell: ({ row }) => (
+          <RowActions
+            onEdit={() => onEdit(row.original.id)}
+            onDelete={() => onDelete(row.original)}
+          />
+        ),
+      },
+    ],
+    [onDelete, onEdit],
+  );
+
+  return (
+    <div className="space-y-4">
+      <DataTableShell columns={columns} data={data.items} emptyMessage="No leads match your filters." />
+      <ListPagination page={data.page} totalPages={data.totalPages} total={data.total} />
+    </div>
+  );
+}

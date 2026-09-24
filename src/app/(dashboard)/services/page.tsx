@@ -1,14 +1,22 @@
-import { ModulePlaceholder } from "@/components/shared/module-placeholder";
-import { getModulePlaceholder } from "@/lib/utils/module-page";
+import { Suspense } from "react";
 
-const meta = getModulePlaceholder("/services");
+import { ServicesManager } from "@/components/modules/services/services-manager";
+import { requireAdminPage } from "@/lib/auth/require-admin-page";
+import { listServicesPaginated } from "@/lib/queries/services/list-services";
+import { parseServiceListParams } from "@/lib/validations/services/service-list-params";
 
-export default function ServicesPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function ServicesPage({ searchParams }: PageProps) {
+  await requireAdminPage();
+  const params = parseServiceListParams(await searchParams);
+  const data = await listServicesPaginated(params);
+
   return (
-    <ModulePlaceholder
-      title={meta.title}
-      description={meta.description}
-      phaseLabel="Phase 3 — Service catalog"
-    />
+    <Suspense>
+      <ServicesManager data={data} />
+    </Suspense>
   );
 }

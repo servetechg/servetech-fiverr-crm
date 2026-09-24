@@ -12,7 +12,7 @@
 ## Auth & RBAC
 
 - JWT sessions via Auth.js (`src/auth.ts`).
-- `middleware.ts` guards routes; admin-only paths in `lib/auth/rbac.ts`.
+- `src/proxy.ts` guards routes (Next.js 16+ proxy convention); admin-only paths in `lib/auth/rbac.ts`.
 - Salesperson data scope: filter by `salesperson_id` / assigned lead chain in services.
 
 ## Database

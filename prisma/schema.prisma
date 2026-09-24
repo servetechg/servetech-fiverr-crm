@@ -76,30 +76,48 @@ model User {
   followUps     FollowUp[] @relation("FollowUpSalesperson")
   upsellsOffered Upsell[]  @relation("UpsellOfferedBy")
   ordersAssigned Order[]   @relation("OrderSalesperson")
+  assignedFiverrAccounts UserFiverrAccount[]
+  notes          String?  @db.Text
 
   @@index([role])
   @@map("users")
 }
 
 model FiverrAccount {
-  id          Int      @id @default(autoincrement())
-  accountName String   @unique @map("account_name")
-  profileUrl  String?  @map("profile_url") @db.VarChar(500)
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            Int      @id @default(autoincrement())
+  accountName   String   @unique @map("account_name")
+  accountOwner  String?  @map("account_owner") @db.VarChar(255)
+  assignedTeam  String?  @map("assigned_team") @db.VarChar(255)
+  profileUrl    String?  @map("profile_url") @db.VarChar(500)
+  notes         String?  @db.Text
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  leads  Lead[]
-  orders Order[]
+  leads                   Lead[]
+  orders                  Order[]
+  assignedSalespeople     UserFiverrAccount[]
 
   @@map("fiverr_accounts")
+}
+
+model UserFiverrAccount {
+  userId          Int @map("user_id")
+  fiverrAccountId Int @map("fiverr_account_id")
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fiverrAccount FiverrAccount @relation(fields: [fiverrAccountId], references: [id], onDelete: Cascade)
+
+  @@id([userId, fiverrAccountId])
+  @@map("user_fiverr_accounts")
 }
 
 model Service {
   id               Int      @id @default(autoincrement())
   serviceName      String   @unique @map("service_name")
-  category         String   @db.VarChar(100)
+  category         String   @default("General") @db.VarChar(100)
   defaultBasePrice Decimal? @default(0) @map("default_base_price") @db.Decimal(10, 2)
+  isActive         Boolean  @default(true) @map("is_active")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
@@ -126,7 +144,9 @@ model Lead {
   followUpDate      DateTime?    @map("follow_up_date") @db.Date
   clientRequirement String?      @map("client_requirement") @db.Text
   internalNotes     String?      @map("internal_notes") @db.Text
-  lostReason        String?      @map("lost_reason") @db.Text
+  lostReason        String?      @map("lost_reason") @db.VarChar(255)
+  lostChatProof     Json?        @map("lost_chat_proof")
+  upsellEligible    Boolean      @default(false) @map("upsell_eligible")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 

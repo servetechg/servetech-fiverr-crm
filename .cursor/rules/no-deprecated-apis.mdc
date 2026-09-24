@@ -1,0 +1,14 @@
+---
+description: Do not use deprecated APIs, file conventions, or package patterns
+alwaysApply: true
+---
+
+# No deprecated APIs
+
+- **Next.js 16+:** Use `src/proxy.ts` (or root `proxy.ts`) for request guards — **never** add `middleware.ts`. Auth wrapping stays `export default auth(...)` in `proxy.ts`.
+- **Next.js:** Do not use deprecated config flags (`skipMiddlewareUrlNormalize`, etc.); use `skipProxyUrlNormalize` and current docs under `node_modules/next/dist/docs/`.
+- **Auth.js:** Do not import `next-auth/middleware`. Use `auth` from `@/auth` in `proxy.ts` only.
+- **Prisma:** Configure seed/migrations in `prisma.config.ts` via `defineConfig` from `prisma/config` — **never** add a `prisma` block to `package.json`.
+- **TypeScript / libraries:** Do not call APIs marked `@deprecated` or `@deprecatedWithReason`. ESLint `@typescript-eslint/no-deprecated` is enabled — fix or replace instead of suppressing.
+- **Dependencies:** Do not add npm packages flagged deprecated; upgrade or swap before merging.
+- When upgrading Next.js or Prisma, run `npm run dev` / `npm run build` and eliminate new deprecation warnings before finishing the task.
