@@ -1,12 +1,13 @@
-import type { ActivityType, LeadPriority, LeadStatus, OrderStatus } from "@prisma/client";
+import type { AuditCategory, LeadPriority, LeadStatus, OrderStatus } from "@prisma/client";
 
 import type { LostReasonValue } from "@/lib/constants/lost-reasons";
 import type { LostChatProof } from "@/types/leads/lost-chat-proof";
 
 export type LeadActivityItem = {
   id: number;
-  notes: string;
-  activityType: ActivityType;
+  summary: string;
+  details: string | null;
+  category: AuditCategory;
   activityTime: string;
   userName: string;
 };
@@ -34,6 +35,7 @@ export type LeadDetail = {
   lostReason: string | null;
   lostChatProof: LostChatProof | null;
   upsellEligible: boolean;
+  canEdit: boolean;
   activities: LeadActivityItem[];
 };
 

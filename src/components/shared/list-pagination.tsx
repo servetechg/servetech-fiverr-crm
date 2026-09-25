@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { ListPageSizeSelect } from "@/components/shared/list-page-size-select";
 import { Button } from "@/components/ui/button";
 import { getPaginationRange } from "@/lib/utils/pagination";
 import { cn } from "@/lib/utils/cn";
@@ -11,6 +12,8 @@ type ListPaginationProps = {
   page: number;
   totalPages: number;
   total: number;
+  pageSize?: number;
+  pageSizeOptions?: readonly number[];
   /** Singular noun for counts, e.g. "lead", "account", "service", "record" */
   entitySingular?: string;
 };
@@ -19,6 +22,8 @@ export function ListPagination({
   page,
   totalPages,
   total,
+  pageSize,
+  pageSizeOptions,
   entitySingular = "lead",
 }: ListPaginationProps) {
   const entityPlural = entitySingular === "record" ? "records" : `${entitySingular}s`;
@@ -36,11 +41,16 @@ export function ListPagination({
 
   return (
     <>
-      <p className="text-sm text-muted-foreground">
-        {total === 0
-          ? "No results"
-          : `${total} ${total === 1 ? entitySingular : entityPlural} · Page ${page} of ${totalPages}`}
-      </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <p className="text-sm text-muted-foreground">
+          {total === 0
+            ? "No results"
+            : `${total} ${total === 1 ? entitySingular : entityPlural} · Page ${page} of ${totalPages}`}
+        </p>
+        {pageSize !== undefined && pageSizeOptions && pageSizeOptions.length > 0 ? (
+          <ListPageSizeSelect value={pageSize} options={pageSizeOptions} />
+        ) : null}
+      </div>
       <nav
         className="flex flex-wrap items-center justify-center gap-1 sm:justify-end"
         aria-label="Pagination"

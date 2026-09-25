@@ -32,10 +32,10 @@ export function ModuleNavTabs({ user }: ModuleNavTabsProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-3.5 sm:text-sm",
+                "shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-3.5 sm:text-sm",
                 active
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-white/60 hover:text-foreground",
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground dark:hover:bg-muted/50",
               )}
             >
               {item.title}

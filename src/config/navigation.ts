@@ -41,7 +41,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     title: "Activities",
     href: "/activities",
     icon: Activity,
-    description: "Messages, calls, and notes",
+    description: "System activity and audit log",
   },
   {
     title: "Orders",
@@ -111,8 +111,8 @@ export const MODULE_PLACEHOLDERS: Record<string, { title: string; description: s
     icon: UserCircle2,
   },
   "/activities": {
-    title: "Activities",
-    description: "Interaction history and notes tied to leads.",
+    title: "Activity log",
+    description: "Automatic audit trail of CRM actions by user and time.",
     icon: Activity,
   },
   "/orders": {

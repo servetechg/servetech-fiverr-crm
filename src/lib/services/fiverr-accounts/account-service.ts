@@ -1,6 +1,7 @@
-import { Prisma } from "@prisma/client";
+import { AuditCategory, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { recordAuditEvent } from "@/lib/services/audit/record-audit-event";
 import type { FiverrAccountFormInput } from "@/lib/validations/fiverr-accounts/account-schema";
 import type { SessionUser } from "@/types/common/session-user";
 
@@ -29,6 +30,16 @@ export async function createFiverrAccount(
       isActive: input.isActive,
     },
   });
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.FiverrAccount,
+    action: "create",
+    summary: "Fiverr account created",
+    details: `Account "${input.accountName}" added.`,
+    entityLabel: input.accountName,
+  });
+
   return { id: created.id };
 }
 
@@ -47,10 +58,23 @@ export async function updateFiverrAccount(
       isActive: input.isActive,
     },
   });
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.FiverrAccount,
+    action: "update",
+    summary: "Fiverr account updated",
+    details: `Account "${input.accountName}" saved.`,
+    entityLabel: input.accountName,
+  });
 }
 
 export async function deleteFiverrAccount(user: SessionUser, id: number): Promise<void> {
   assertAdmin(user);
+  const existing = await prisma.fiverrAccount.findUnique({
+    where: { id },
+    select: { accountName: true },
+  });
   try {
     await prisma.fiverrAccount.delete({ where: { id } });
   } catch (error) {
@@ -58,5 +82,16 @@ export async function deleteFiverrAccount(user: SessionUser, id: number): Promis
       throw new Error("This account is linked to leads or orders and cannot be deleted.");
     }
     throw error;
+  }
+
+  if (existing) {
+    await recordAuditEvent({
+      userId: user.id,
+      category: AuditCategory.FiverrAccount,
+      action: "delete",
+      summary: "Fiverr account deleted",
+      details: `Account "${existing.accountName}" removed.`,
+      entityLabel: existing.accountName,
+    });
   }
 }

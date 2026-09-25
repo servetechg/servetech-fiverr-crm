@@ -1,7 +1,8 @@
-import { Prisma } from "@prisma/client";
+import { AuditCategory, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/db/prisma";
+import { recordAuditEvent } from "@/lib/services/audit/record-audit-event";
 import type { SalesTeamFormInput } from "@/lib/validations/sales-team/user-schema";
 import type { SessionUser } from "@/types/common/session-user";
 
@@ -51,6 +52,16 @@ export async function createTeamMember(
   });
 
   await syncAssignedAccounts(created.id, input.fiverrAccountIds);
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.Team,
+    action: "create",
+    summary: "Team member created",
+    details: `${input.fullName} (${input.email}) · Role: ${input.role}.`,
+    entityLabel: input.fullName,
+  });
+
   return { id: created.id };
 }
 
@@ -97,6 +108,15 @@ export async function updateTeamMember(
       });
     }
   });
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.Team,
+    action: "update",
+    summary: "Team member updated",
+    details: `${input.fullName} (${input.email}) · Role: ${input.role}.`,
+    entityLabel: input.fullName,
+  });
 }
 
 export async function deleteTeamMember(user: SessionUser, id: number): Promise<void> {
@@ -104,6 +124,10 @@ export async function deleteTeamMember(user: SessionUser, id: number): Promise<v
   if (user.id === id) {
     throw new Error("You cannot delete your own account.");
   }
+  const existing = await prisma.user.findUnique({
+    where: { id },
+    select: { fullName: true, email: true },
+  });
   try {
     await prisma.user.delete({ where: { id } });
   } catch (error) {
@@ -111,5 +135,16 @@ export async function deleteTeamMember(user: SessionUser, id: number): Promise<v
       throw new Error("This user is linked to leads or records and cannot be deleted.");
     }
     throw error;
+  }
+
+  if (existing) {
+    await recordAuditEvent({
+      userId: user.id,
+      category: AuditCategory.Team,
+      action: "delete",
+      summary: "Team member deleted",
+      details: `${existing.fullName} (${existing.email}) removed.`,
+      entityLabel: existing.fullName,
+    });
   }
 }

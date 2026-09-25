@@ -11,12 +11,16 @@ import { DataTableShell } from "@/components/shared/data-table-shell";
 import { ListPagination } from "@/components/shared/list-pagination";
 import { RowActions } from "@/components/shared/row-actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LEAD_PAGE_SIZE_OPTIONS } from "@/lib/constants/lead-pagination";
 import { formatCurrency } from "@/lib/utils/format";
+import { canDeleteLead, canMutateLead } from "@/lib/auth/lead-scope";
 import type { PaginatedResult } from "@/types/common/pagination";
+import type { SessionUser } from "@/types/common/session-user";
 import type { LeadListItem } from "@/types/leads/lead-list-item";
 
 type LeadsTableViewProps = {
   data: PaginatedResult<LeadListItem>;
+  user: SessionUser;
 };
 
 function clientInitials(name: string): string {
@@ -47,8 +51,9 @@ function ClientCell({ item }: { item: LeadListItem }) {
   );
 }
 
-export function LeadsTableView({ data }: LeadsTableViewProps) {
+export function LeadsTableView({ data, user }: LeadsTableViewProps) {
   const { onEdit, onDelete } = useLeadsActions();
+  const adminCanDelete = canDeleteLead(user);
 
   const columns = useMemo<ColumnDef<LeadListItem, unknown>[]>(
     () => [
@@ -76,15 +81,23 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
       {
         accessorKey: "fiverrAccountName",
         header: "Account",
-        cell: ({ row }) => row.original.fiverrAccountName,
+        cell: ({ row }) => (
+          <span className="inline-block max-w-[12rem] truncate">{row.original.fiverrAccountName}</span>
+        ),
       },
       {
         accessorKey: "salespersonName",
         header: "Rep",
+        cell: ({ row }) => (
+          <span className="inline-block max-w-[10rem] truncate">{row.original.salespersonName}</span>
+        ),
       },
       {
         accessorKey: "serviceName",
         header: "Service",
+        cell: ({ row }) => (
+          <span className="inline-block max-w-[14rem] truncate">{row.original.serviceName}</span>
+        ),
       },
       {
         accessorKey: "status",
@@ -128,24 +141,29 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
           <RowActions
             detailHref={`/leads/${row.original.id}`}
             onEdit={() => onEdit(row.original.id)}
-            onDelete={() => onDelete(row.original)}
+            onDelete={adminCanDelete ? () => onDelete(row.original) : undefined}
+            showEdit={canMutateLead(user, row.original.salespersonId)}
+            showDelete={adminCanDelete}
           />
         ),
       },
     ],
-    [onDelete, onEdit],
+    [adminCanDelete, onDelete, onEdit, user],
   );
 
   return (
     <DataTableShell
       columns={columns}
       data={data.items}
+      stickyColumnIds={["actions"]}
       emptyMessage="No leads match your filters."
       footer={
         <ListPagination
           page={data.page}
           totalPages={data.totalPages}
           total={data.total}
+          pageSize={data.pageSize}
+          pageSizeOptions={LEAD_PAGE_SIZE_OPTIONS}
           entitySingular="lead"
         />
       }

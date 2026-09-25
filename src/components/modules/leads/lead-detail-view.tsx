@@ -16,6 +16,7 @@ import { ChatProofTableCell } from "@/components/modules/leads/chat-proof-table-
 import { LeadPriorityBadge, LeadStatusBadge } from "@/components/modules/leads/lead-badges";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateTimeDisplay } from "@/lib/utils/date-input";
 import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import type { LeadDetail } from "@/types/leads/lead-detail";
@@ -64,13 +65,6 @@ function DetailSection({ title, children }: DetailSectionProps) {
   );
 }
 
-function formatActivityTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
 export function LeadDetailView({ lead }: LeadDetailViewProps) {
   const clientLabel = lead.clientName ?? lead.fiverrUsername;
 
@@ -87,6 +81,11 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
                 Upsell eligible
               </span>
             )}
+            {!lead.canEdit ? (
+              <span className="inline-flex rounded-full bg-muted/60 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                View only · assigned to {lead.salespersonName}
+              </span>
+            ) : null}
           </div>
           <div className="space-y-1.5">
             <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
@@ -186,7 +185,7 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
 
         <Card className="glass-surface gap-0 overflow-hidden rounded-[1.75rem] border-white/60 py-0 ring-1 ring-white/40">
           <CardHeader className="border-b border-white/50 px-5 py-4 sm:px-6">
-            <CardTitle className="text-base font-semibold tracking-tight">Activity</CardTitle>
+            <CardTitle className="text-base font-semibold tracking-tight">Activity log</CardTitle>
           </CardHeader>
           <CardContent className="px-5 py-5 sm:px-6 sm:py-6">
             {lead.activities.length === 0 ? (
@@ -194,7 +193,7 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
                 <MessageSquareText className="size-8 text-muted-foreground/50" aria-hidden />
                 <p className="mt-3 text-sm font-medium text-foreground/80">No activity yet</p>
                 <p className="mt-1 max-w-[14rem] text-xs leading-relaxed text-muted-foreground">
-                  Notes and touchpoints will show up here as your team logs them.
+                  CRM actions on this lead are recorded automatically.
                 </p>
               </div>
             ) : (
@@ -215,11 +214,18 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
                       />
                       <div className="min-w-0 flex-1 rounded-2xl border border-white/50 bg-white/35 p-3.5">
                         <p className="text-xs text-muted-foreground">
-                          {formatActivityTime(activity.activityTime)}
+                          {formatDateTimeDisplay(activity.activityTime)}
                           <span className="text-muted-foreground/70"> · </span>
                           <span className="font-medium text-foreground/75">{activity.userName}</span>
                         </p>
-                        <p className="mt-2 text-sm leading-relaxed text-foreground/90">{activity.notes}</p>
+                        <p className="mt-1.5 text-sm font-medium text-foreground/90">
+                          {activity.summary}
+                        </p>
+                        {activity.details ? (
+                          <p className="mt-1 text-sm leading-relaxed text-foreground/80">
+                            {activity.details}
+                          </p>
+                        ) : null}
                       </div>
                     </li>
                   );

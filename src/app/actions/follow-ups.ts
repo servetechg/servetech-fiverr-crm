@@ -35,6 +35,7 @@ export async function upsertFollowUpAction(raw: unknown): Promise<ActionResult<n
       await createFollowUp(user, parsed.data);
     }
     revalidatePath("/follow-ups");
+    revalidatePath("/activities");
     revalidatePath(`/leads/${parsed.data.leadId}`);
     return actionSuccess(null);
   } catch (error) {
@@ -57,6 +58,7 @@ export async function moveFollowUpBucketAction(raw: unknown): Promise<ActionResu
   try {
     await moveFollowUpBoard(user, parsed.data);
     revalidatePath("/follow-ups");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not move follow-up.";
@@ -78,6 +80,7 @@ export async function deleteFollowUpAction(raw: unknown): Promise<ActionResult<n
   try {
     await deleteFollowUp(user, parsed.data.id);
     revalidatePath("/follow-ups");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not delete follow-up.";

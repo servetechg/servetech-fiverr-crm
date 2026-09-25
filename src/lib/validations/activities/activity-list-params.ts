@@ -1,4 +1,4 @@
-import { ActivityDirection, ActivityType } from "@prisma/client";
+import { AuditCategory } from "@prisma/client";
 import { z } from "zod";
 
 import { adminPaginationFields } from "@/lib/validations/admin/active-filter-params";
@@ -12,26 +12,16 @@ export const activityListParamsSchema = z.object({
     .transform((value) => (value && isDateRangePreset(value) ? value : "all_time")),
   from: z.string().trim().optional(),
   to: z.string().trim().optional(),
-  type: z
+  category: z
     .string()
     .optional()
     .transform((value) => {
       if (!value || value === "all") {
         return undefined;
       }
-      return value as ActivityType;
+      return value as AuditCategory;
     })
-    .pipe(z.enum(ActivityType).optional()),
-  direction: z
-    .string()
-    .optional()
-    .transform((value) => {
-      if (!value || value === "all") {
-        return undefined;
-      }
-      return value as ActivityDirection;
-    })
-    .pipe(z.enum(ActivityDirection).optional()),
+    .pipe(z.enum(AuditCategory).optional()),
   salespersonId: z.coerce.number().int().positive().optional(),
   ...adminPaginationFields,
 });

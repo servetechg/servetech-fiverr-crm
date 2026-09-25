@@ -2,8 +2,9 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 
+import { SearchInputIcon } from "@/components/shared/search-input-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -85,10 +86,7 @@ export function LeadsSearchInput() {
 
   return (
     <div className="relative w-full max-w-md">
-      <Search
-        className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-        aria-hidden
-      />
+      <SearchInputIcon />
       <Input
         type="search"
         enterKeyHint="search"

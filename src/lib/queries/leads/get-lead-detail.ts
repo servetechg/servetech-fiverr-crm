@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 
-import { leadScopeWhere } from "@/lib/auth/lead-scope";
+import { canMutateLead } from "@/lib/auth/lead-scope";
 import { prisma } from "@/lib/db/prisma";
 import { lostReasonDisplay, parseLostReasonFromDb } from "@/lib/utils/lost-reason-parse";
 import type { LeadDetail, LeadFormRecord } from "@/types/leads/lead-detail";
@@ -13,8 +13,8 @@ function formatDate(value: Date): string {
 }
 
 export async function getLeadDetail(user: SessionUser, id: number): Promise<LeadDetail> {
-  const lead = await prisma.lead.findFirst({
-    where: { id, ...leadScopeWhere(user) },
+  const lead = await prisma.lead.findUnique({
+    where: { id },
     include: {
       fiverrAccount: { select: { accountName: true } },
       salesperson: { select: { fullName: true } },
@@ -24,8 +24,8 @@ export async function getLeadDetail(user: SessionUser, id: number): Promise<Lead
         take: 1,
         select: { frontRevenue: true },
       },
-      activities: {
-        orderBy: { activityTime: "desc" },
+      auditLogs: {
+        orderBy: { createdAt: "desc" },
         include: { user: { select: { fullName: true } } },
       },
     },
@@ -60,19 +60,21 @@ export async function getLeadDetail(user: SessionUser, id: number): Promise<Lead
     lostReason: lostReasonDisplay(lead.lostReason),
     lostChatProof: parseLostChatProof(lead.lostChatProof),
     upsellEligible: lead.upsellEligible,
-    activities: lead.activities.map((activity) => ({
-      id: activity.id,
-      notes: activity.notes,
-      activityType: activity.activityType,
-      activityTime: activity.activityTime.toISOString(),
-      userName: activity.user.fullName,
+    canEdit: canMutateLead(user, lead.salespersonId),
+    activities: lead.auditLogs.map((entry) => ({
+      id: entry.id,
+      summary: entry.summary,
+      details: entry.details,
+      category: entry.category,
+      activityTime: entry.createdAt.toISOString(),
+      userName: entry.user.fullName,
     })),
   };
 }
 
 export async function getLeadFormRecord(user: SessionUser, id: number): Promise<LeadFormRecord | null> {
-  const lead = await prisma.lead.findFirst({
-    where: { id, ...leadScopeWhere(user) },
+  const lead = await prisma.lead.findUnique({
+    where: { id },
     include: {
       orders: {
         orderBy: { createdAt: "asc" },
@@ -82,6 +84,10 @@ export async function getLeadFormRecord(user: SessionUser, id: number): Promise<
   });
 
   if (!lead) {
+    return null;
+  }
+
+  if (!canMutateLead(user, lead.salespersonId)) {
     return null;
   }
 

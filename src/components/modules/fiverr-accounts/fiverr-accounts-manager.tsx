@@ -18,7 +18,9 @@ import { AdminActiveStatusFilter } from "@/components/shared/admin-active-status
 import { AdminSearchInput } from "@/components/shared/admin-search-input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTableShell } from "@/components/shared/data-table-shell";
+import { ActiveInactiveSelectLabel } from "@/components/shared/active-inactive-select-label";
 import { ListPagination } from "@/components/shared/list-pagination";
+import { TABLE_PAGE_SIZE_OPTIONS } from "@/lib/constants/table-pagination";
 import { RowActions } from "@/components/shared/row-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +37,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -102,6 +103,7 @@ export function FiverrAccountsManager({ data }: FiverrAccountsManagerProps) {
       {
         id: "actions",
         header: "Action",
+        meta: { align: "right" },
         cell: ({ row }) => (
           <RowActions
             onEdit={() => openEdit(row.original)}
@@ -181,12 +183,21 @@ export function FiverrAccountsManager({ data }: FiverrAccountsManagerProps) {
         <p className="text-sm text-muted-foreground sm:ml-auto">{data.total} records</p>
       </div>
 
-      <DataTableShell columns={columns} data={data.items} emptyMessage="No Fiverr accounts match your filters." />
-      <ListPagination
-        page={data.page}
-        totalPages={data.totalPages}
-        total={data.total}
-        entitySingular="account"
+      <DataTableShell
+        columns={columns}
+        data={data.items}
+        stickyColumnIds={["actions"]}
+        emptyMessage="No Fiverr accounts match your filters."
+        footer={
+          <ListPagination
+            page={data.page}
+            totalPages={data.totalPages}
+            total={data.total}
+            pageSize={data.pageSize}
+            pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+            entitySingular="account"
+          />
+        }
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -197,15 +208,15 @@ export function FiverrAccountsManager({ data }: FiverrAccountsManagerProps) {
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="accountName">Account name</Label>
-              <Input id="accountName" {...form.register("accountName")} />
+              <Input id="accountName" placeholder="Fiverr profile or display name" {...form.register("accountName")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="accountOwner">Account owner</Label>
-              <Input id="accountOwner" {...form.register("accountOwner")} />
+              <Input id="accountOwner" placeholder="Owner or manager name" {...form.register("accountOwner")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="assignedTeam">Assigned team</Label>
-              <Input id="assignedTeam" {...form.register("assignedTeam")} />
+              <Input id="assignedTeam" placeholder="Team handling this account" {...form.register("assignedTeam")} />
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
@@ -217,7 +228,7 @@ export function FiverrAccountsManager({ data }: FiverrAccountsManagerProps) {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <ActiveInactiveSelectLabel isActive={isActiveValue} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
@@ -227,7 +238,7 @@ export function FiverrAccountsManager({ data }: FiverrAccountsManagerProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" rows={3} {...form.register("notes")} />
+              <Textarea id="notes" rows={3} placeholder="Optional account notes…" {...form.register("notes")} />
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="ghost" className="rounded-full" onClick={() => setOpen(false)}>

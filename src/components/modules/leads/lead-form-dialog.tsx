@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { upsertLeadAction } from "@/app/actions/leads";
 import { ChatProofUpload } from "@/components/modules/leads/chat-proof-upload";
+import { DatePickerField } from "@/components/shared/date-picker-field";
 import {
   FormSelectTriggerLabel,
   resolveOptionLabel,
@@ -154,10 +155,17 @@ export function LeadFormDialog({
               <Label className="form-field-label" htmlFor="dateReceived">
                 Date received
               </Label>
-              <Input
-                id="dateReceived"
-                type="date"
-                {...form.register("dateReceived")}
+              <Controller
+                control={form.control}
+                name="dateReceived"
+                render={({ field }) => (
+                  <DatePickerField
+                    id="dateReceived"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select date received"
+                  />
+                )}
               />
             </div>
             <div className="space-y-2">
@@ -194,7 +202,7 @@ export function LeadFormDialog({
               <Label className="form-field-label" htmlFor="clientName">
                 Client name
               </Label>
-              <Input id="clientName" {...form.register("clientName")} />
+              <Input id="clientName" placeholder="Client display name" {...form.register("clientName")} />
             </div>
             <div className="space-y-2">
               <Label className="form-field-label" htmlFor="fiverrUsername">
@@ -202,6 +210,7 @@ export function LeadFormDialog({
               </Label>
               <Input
                 id="fiverrUsername"
+                placeholder="Fiverr @username"
                 {...form.register("fiverrUsername")}
               />
             </div>
@@ -280,6 +289,7 @@ export function LeadFormDialog({
                 type="number"
                 min={0}
                 step="0.01"
+                placeholder="0.00"
                 {...form.register("estProjectValue", { valueAsNumber: true })}
               />
             </div>
@@ -287,10 +297,18 @@ export function LeadFormDialog({
               <Label className="form-field-label" htmlFor="followUpDate">
                 Follow-up date
               </Label>
-              <Input
-                id="followUpDate"
-                type="date"
-                {...form.register("followUpDate")}
+              <Controller
+                control={form.control}
+                name="followUpDate"
+                render={({ field }) => (
+                  <DatePickerField
+                    id="followUpDate"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Optional follow-up"
+                    clearable
+                  />
+                )}
               />
             </div>
           </div>
@@ -392,6 +410,7 @@ export function LeadFormDialog({
                     type="number"
                     min={0}
                     step="0.01"
+                    placeholder="0.00"
                     {...form.register("orderValue", { valueAsNumber: true })}
                   />
                   {form.formState.errors.orderValue?.message && (
@@ -444,6 +463,7 @@ export function LeadFormDialog({
             </Label>
             <Textarea
               id="clientRequirement"
+              placeholder="What the client asked for…"
               {...form.register("clientRequirement")}
             />
           </div>
@@ -453,6 +473,7 @@ export function LeadFormDialog({
             </Label>
             <Textarea
               id="internalNotes"
+              placeholder="Internal notes for your team…"
               {...form.register("internalNotes")}
             />
           </div>

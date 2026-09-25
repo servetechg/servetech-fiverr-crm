@@ -11,11 +11,14 @@ import { toast } from "sonner";
 import { deleteTeamMemberAction, upsertTeamMemberAction } from "@/app/actions/sales-team";
 import { PageHeader } from "@/components/layout/page-header";
 import { ActiveStatusBadge } from "@/components/shared/active-status-badge";
+import { AdminActiveStatusFilter } from "@/components/shared/admin-active-status-filter";
 import { AdminRoleFilter } from "@/components/shared/admin-role-filter";
 import { AdminSearchInput } from "@/components/shared/admin-search-input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTableShell } from "@/components/shared/data-table-shell";
+import { ActiveInactiveSelectLabel } from "@/components/shared/active-inactive-select-label";
 import { ListPagination } from "@/components/shared/list-pagination";
+import { TABLE_PAGE_SIZE_OPTIONS } from "@/lib/constants/table-pagination";
 import { RowActions } from "@/components/shared/row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -109,6 +113,7 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
       {
         id: "actions",
         header: "Action",
+        meta: { align: "right" },
         cell: ({ row }) => (
           <RowActions
             onEdit={() => openEdit(row.original)}
@@ -207,15 +212,25 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <AdminSearchInput placeholder="Search name or email…" />
         <AdminRoleFilter />
+        <AdminActiveStatusFilter />
         <p className="text-sm text-muted-foreground sm:ml-auto">{data.total} records</p>
       </div>
 
-      <DataTableShell columns={columns} data={data.items} emptyMessage="No team members match your filters." />
-      <ListPagination
-        page={data.page}
-        totalPages={data.totalPages}
-        total={data.total}
-        entitySingular="record"
+      <DataTableShell
+        columns={columns}
+        data={data.items}
+        stickyColumnIds={["actions"]}
+        emptyMessage="No team members match your filters."
+        footer={
+          <ListPagination
+            page={data.page}
+            totalPages={data.totalPages}
+            total={data.total}
+            pageSize={data.pageSize}
+            pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+            entitySingular="record"
+          />
+        }
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -226,11 +241,17 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="fullName">Name</Label>
-              <Input id="fullName" {...form.register("fullName")} />
+              <Input id="fullName" placeholder="Full name" {...form.register("fullName")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...form.register("email")} />
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@servetech.global"
+                autoComplete="email"
+                {...form.register("email")}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -261,7 +282,7 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <ActiveInactiveSelectLabel isActive={isActiveValue} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
@@ -297,6 +318,7 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
                 type="number"
                 min={0}
                 step="0.01"
+                placeholder="0.00"
                 {...form.register("monthlyTarget", { valueAsNumber: true })}
               />
             </div>
@@ -304,25 +326,30 @@ export function SalesTeamManager({ data, fiverrAccountOptions }: SalesTeamManage
               <Label htmlFor="password">
                 {editing ? "New password (optional)" : "Password"}
               </Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 autoComplete="new-password"
+                placeholder={editing ? "Leave blank to keep current" : "At least 8 characters"}
                 {...form.register("password")}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 autoComplete="new-password"
+                placeholder="Re-enter password"
                 {...form.register("confirmPassword")}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" rows={3} {...form.register("notes")} />
+              <Textarea
+                id="notes"
+                rows={3}
+                placeholder="Optional notes about this team member…"
+                {...form.register("notes")}
+              />
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="ghost" className="rounded-full" onClick={() => setOpen(false)}>

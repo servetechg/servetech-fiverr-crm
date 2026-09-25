@@ -1,16 +1,22 @@
-import { ActivityType, LeadStatus, Prisma } from "@prisma/client";
+import { AuditCategory, LeadStatus, Prisma } from "@prisma/client";
 import type { LeadPriority } from "@prisma/client";
 import { startOfDay } from "date-fns";
 
-import { canMutateLead } from "@/lib/auth/lead-scope";
+import { canDeleteLead, canMutateLead } from "@/lib/auth/lead-scope";
+import {
+  deleteLostChatProofAssets,
+  deleteLostChatProofPublicIds,
+  orphanedLostChatProofPublicIds,
+} from "@/lib/cloudinary/delete-lost-chat-proof";
 import { LOST_REASON_LABELS } from "@/lib/constants/lost-reasons";
 import { LEAD_STATUS_LABELS } from "@/lib/constants/leads";
 import { prisma } from "@/lib/db/prisma";
+import { recordAuditEvent } from "@/lib/services/audit/record-audit-event";
 import { generateNextLeadCustomId } from "@/lib/services/leads/generate-lead-custom-id";
 import { syncLeadPrimaryOrder } from "@/lib/services/leads/sync-lead-order";
 import type { LeadFormInput } from "@/lib/validations/leads/lead-form-schema";
 import type { SessionUser } from "@/types/common/session-user";
-import type { LostChatProof } from "@/types/leads/lost-chat-proof";
+import { parseLostChatProof, type LostChatProof } from "@/types/leads/lost-chat-proof";
 
 function parseOptionalDate(value: string | undefined): Date | null {
   if (!value || value.trim() === "") {
@@ -40,26 +46,10 @@ function lostProofForSave(
   return proof;
 }
 
-async function logActivity(
-  leadId: number,
-  userId: number,
-  notes: string,
-  activityType: ActivityType = ActivityType.CustomNote,
-): Promise<void> {
-  await prisma.activity.create({
-    data: {
-      leadId,
-      userId,
-      notes,
-      activityType,
-      direction: "Internal",
-    },
-  });
-}
-
 async function applyOrderReceivedSideEffects(
   leadId: number,
   input: LeadFormInput,
+  actorUserId: number,
 ): Promise<void> {
   if (input.status !== LeadStatus.OrderReceived) {
     return;
@@ -76,6 +66,7 @@ async function applyOrderReceivedSideEffects(
     orderValue: input.orderValue,
     orderStatus: input.orderStatus,
     upsellEligible: input.upsellEligible ?? false,
+    actorUserId,
   });
 }
 
@@ -111,7 +102,17 @@ export async function createLeadFull(
     },
   });
 
-  await applyOrderReceivedSideEffects(created.id, input);
+  await applyOrderReceivedSideEffects(created.id, input, user.id);
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.Lead,
+    action: "create",
+    summary: "Lead created",
+    details: `Lead ${leadCustomId} was added to the pipeline.`,
+    leadId: created.id,
+    entityLabel: leadCustomId,
+  });
 
   return { id: created.id };
 }
@@ -119,7 +120,7 @@ export async function createLeadFull(
 export async function updateLead(user: SessionUser, input: LeadFormInput & { id: number }): Promise<void> {
   const existing = await prisma.lead.findUnique({
     where: { id: input.id },
-    select: { salespersonId: true, status: true },
+    select: { salespersonId: true, status: true, leadCustomId: true, lostChatProof: true },
   });
 
   if (!existing) {
@@ -133,6 +134,10 @@ export async function updateLead(user: SessionUser, input: LeadFormInput & { id:
   if (user.role !== "Admin" && input.salespersonId !== user.id) {
     throw new Error("You can only assign leads to yourself.");
   }
+
+  const previousProof = parseLostChatProof(existing.lostChatProof);
+  const nextProof =
+    input.status === LeadStatus.Lost ? (input.lostChatProof ?? null) : null;
 
   await prisma.lead.update({
     where: { id: input.id },
@@ -156,39 +161,69 @@ export async function updateLead(user: SessionUser, input: LeadFormInput & { id:
     },
   });
 
-  await applyOrderReceivedSideEffects(input.id, input);
+  const removedIds = orphanedLostChatProofPublicIds(previousProof, nextProof);
+  if (removedIds.length > 0 && previousProof) {
+    await deleteLostChatProofPublicIds(removedIds, previousProof.kind);
+  }
+
+  await applyOrderReceivedSideEffects(input.id, input, user.id);
 
   if (existing.status !== input.status) {
-    await logActivity(
-      input.id,
-      user.id,
-      `Status changed from ${LEAD_STATUS_LABELS[existing.status]} to ${LEAD_STATUS_LABELS[input.status]}.`,
-    );
+    await recordAuditEvent({
+      userId: user.id,
+      category: AuditCategory.Lead,
+      action: "status_change",
+      summary: "Lead status changed",
+      details: `Status updated from ${LEAD_STATUS_LABELS[existing.status]} to ${LEAD_STATUS_LABELS[input.status]}.`,
+      leadId: input.id,
+      entityLabel: existing.leadCustomId,
+    });
+  } else {
+    await recordAuditEvent({
+      userId: user.id,
+      category: AuditCategory.Lead,
+      action: "update",
+      summary: "Lead updated",
+      details: "Lead details were saved.",
+      leadId: input.id,
+      entityLabel: existing.leadCustomId,
+    });
   }
 }
 
 export async function deleteLead(user: SessionUser, id: number): Promise<void> {
+  if (!canDeleteLead(user)) {
+    throw new Error("Only administrators can delete leads.");
+  }
+
   const existing = await prisma.lead.findUnique({
     where: { id },
-    select: { salespersonId: true },
+    select: { leadCustomId: true, lostChatProof: true },
   });
 
   if (!existing) {
     throw new Error("Lead not found.");
   }
 
-  if (!canMutateLead(user, existing.salespersonId)) {
-    throw new Error("Forbidden");
-  }
+  const proof = parseLostChatProof(existing.lostChatProof);
+  await deleteLostChatProofAssets(proof);
 
-  try {
-    await prisma.lead.delete({ where: { id } });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
-      throw new Error("This lead is linked to orders or records and cannot be deleted.");
-    }
-    throw error;
-  }
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.Lead,
+    action: "delete",
+    summary: "Lead deleted",
+    details: `Lead ${existing.leadCustomId} was removed from the CRM.`,
+    entityLabel: existing.leadCustomId,
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.upsell.deleteMany({ where: { leadId: id } });
+    await tx.followUp.deleteMany({ where: { leadId: id } });
+    await tx.activity.deleteMany({ where: { leadId: id } });
+    await tx.order.deleteMany({ where: { leadId: id } });
+    await tx.lead.delete({ where: { id } });
+  });
 }
 
 export type LeadCsvImportRow = {
@@ -269,6 +304,14 @@ export async function importLeadsFromRows(
     });
     imported += 1;
   }
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.Data,
+    action: "import",
+    summary: "Leads imported from CSV",
+    details: `${imported} row(s) processed.`,
+  });
 
   return { imported };
 }

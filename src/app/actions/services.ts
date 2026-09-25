@@ -42,6 +42,7 @@ export async function upsertServiceAction(raw: unknown): Promise<ActionResult<nu
       await createService(user, parsed.data);
     }
     revalidatePath("/services");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not save service.";
@@ -66,6 +67,7 @@ export async function setServiceActiveAction(raw: unknown): Promise<ActionResult
   try {
     await setServiceActive(user, parsed.data.id, parsed.data.isActive);
     revalidatePath("/services");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not update service.";
@@ -90,6 +92,7 @@ export async function deleteServiceAction(raw: unknown): Promise<ActionResult<nu
   try {
     await deleteService(user, parsed.data.id);
     revalidatePath("/services");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not delete service.";
