@@ -64,7 +64,7 @@ export function DateRangePickerField({ from, to, onApply, className }: DateRange
             }
           }}
           defaultMonth={selected?.from}
-          initialFocus
+          autoFocus
         />
       </PopoverContent>
     </Popover>
