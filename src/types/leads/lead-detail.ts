@@ -35,6 +35,7 @@ export type LeadDetail = {
   lostReason: string | null;
   lostChatProof: LostChatProof | null;
   upsellEligible: boolean;
+  canEdit: boolean;
   activities: LeadActivityItem[];
 };
 

@@ -3,7 +3,6 @@ import { format } from "date-fns";
 
 import { DEFAULT_LEAD_PAGE_SIZE } from "@/lib/constants/lead-pagination";
 import { leadScopeWhere } from "@/lib/auth/lead-scope";
-import { isAdmin } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/db/prisma";
 import { buildPaginatedResult, paginationSkip } from "@/lib/utils/pagination";
 import { resolveDateRange } from "@/lib/utils/date-range";
@@ -17,14 +16,8 @@ function buildLeadListWhere(user: SessionUser, params: LeadListParams): Prisma.L
   const range = resolveDateRange(params.range, params.from, params.to);
   const scope = leadScopeWhere(user);
 
-  let salespersonFilter: number | undefined;
-  if (params.salespersonId) {
-    if (isAdmin(user) || params.salespersonId === user.id) {
-      salespersonFilter = params.salespersonId;
-    } else if (!isAdmin(user)) {
-      salespersonFilter = user.id;
-    }
-  }
+  void user;
+  const salespersonFilter = params.salespersonId;
 
   const where: Prisma.LeadWhereInput = {
     ...scope,

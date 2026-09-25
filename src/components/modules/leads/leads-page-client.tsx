@@ -165,7 +165,7 @@ export function LeadsPageClient({ user, filterOptions, children }: LeadsPageClie
           }
         />
 
-        <LeadsFilters filterOptions={filterOptions} user={user} />
+        <LeadsFilters filterOptions={filterOptions} />
 
         {children}
 
@@ -187,7 +187,7 @@ export function LeadsPageClient({ user, filterOptions, children }: LeadsPageClie
           title="Delete lead?"
           description={
             deleteTarget
-              ? `${deleteTarget.leadCustomId} (${deleteTarget.clientLabel}) will be permanently removed. Linked orders may block deletion.`
+              ? `${deleteTarget.leadCustomId} (${deleteTarget.clientLabel}) will be permanently removed, including linked orders, follow-ups, and any chat proof files in Cloudinary.`
               : ""
           }
           confirmLabel="Delete lead"

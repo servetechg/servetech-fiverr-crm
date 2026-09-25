@@ -81,6 +81,11 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
                 Upsell eligible
               </span>
             )}
+            {!lead.canEdit ? (
+              <span className="inline-flex rounded-full bg-muted/60 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                View only · assigned to {lead.salespersonName}
+              </span>
+            ) : null}
           </div>
           <div className="space-y-1.5">
             <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">

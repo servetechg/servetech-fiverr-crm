@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { zodFieldErrors } from "@/lib/actions/zod-form-errors";
-import { getSessionUser, unauthorizedActionResult } from "@/lib/auth/session";
+import { canDeleteLead } from "@/lib/auth/lead-scope";
+import { forbiddenActionResult, getSessionUser, unauthorizedActionResult } from "@/lib/auth/session";
+import { prisma } from "@/lib/db/prisma";
 import { getLeadFormRecord } from "@/lib/queries/leads/get-lead-detail";
 import { createLeadFull, deleteLead, updateLead } from "@/lib/services/leads/lead-service";
 import { leadFormSchema, leadIdSchema } from "@/lib/validations/leads/lead-form-schema";
@@ -25,6 +27,13 @@ export async function getLeadFormRecordAction(
 
   const record = await getLeadFormRecord(user, parsed.data.id);
   if (!record) {
+    const exists = await prisma.lead.findUnique({
+      where: { id: parsed.data.id },
+      select: { id: true },
+    });
+    if (exists) {
+      return actionFailure("You can only edit leads assigned to you.");
+    }
     return actionFailure("Lead not found.");
   }
 
@@ -71,10 +80,16 @@ export async function deleteLeadAction(raw: unknown): Promise<ActionResult<null>
     return actionFailure("Invalid lead id.");
   }
 
+  if (!canDeleteLead(user)) {
+    return forbiddenActionResult();
+  }
+
   try {
     await deleteLead(user, parsed.data.id);
     revalidatePath("/leads");
     revalidatePath("/activities");
+    revalidatePath("/orders");
+    revalidatePath("/follow-ups");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not delete lead.";
