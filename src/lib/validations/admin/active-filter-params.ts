@@ -1,8 +1,15 @@
 import { z } from "zod";
 
+import { parseTablePageSize } from "@/lib/constants/table-pagination";
+
 export const adminPaginationFields = {
   page: z.coerce.number().int().positive().default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(10),
+  pageSize: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((value) =>
+      parseTablePageSize(value === undefined ? undefined : String(value)),
+    ),
 };
 
 export const activeStatusFilterSchema = z

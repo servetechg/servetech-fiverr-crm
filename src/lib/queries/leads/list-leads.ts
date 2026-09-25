@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { format } from "date-fns";
 
+import { DEFAULT_LEAD_PAGE_SIZE } from "@/lib/constants/lead-pagination";
 import { leadScopeWhere } from "@/lib/auth/lead-scope";
 import { isAdmin } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/db/prisma";
@@ -134,7 +135,7 @@ export async function listLeadsForExport(
   user: SessionUser,
   params: Omit<LeadListParams, "page" | "pageSize">,
 ): Promise<LeadExportRow[]> {
-  const where = buildLeadListWhere(user, { ...params, page: 1, pageSize: 1 });
+  const where = buildLeadListWhere(user, { ...params, page: 1, pageSize: DEFAULT_LEAD_PAGE_SIZE });
   const rows = await prisma.lead.findMany({
     where,
     include: leadListInclude,

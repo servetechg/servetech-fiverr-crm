@@ -17,6 +17,7 @@
     "db:push": "prisma db push --accept-data-loss",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
+    "icons:generate": "node scripts/generate-app-icons.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -35,6 +36,7 @@
     "next-auth": "^5.0.0-beta.30",
     "next-themes": "^0.4.6",
     "react": "19.2.8",
+    "react-day-picker": "^9.11.2",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.88.0",
     "shadcn": "^4.21.0",
@@ -49,13 +51,15 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
-    "dotenv": "^17.2.3",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.8",
     "prisma": "^6.19.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
+    "to-ico": "^1.1.5",
     "tsx": "^4.23.15",
     "typescript": "^5",
     "typescript-eslint": "^8.70.1"

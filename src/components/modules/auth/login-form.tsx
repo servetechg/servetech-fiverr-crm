@@ -1,12 +1,13 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { loginAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { cn } from "cn";
 
 type LoginFormProps = {
@@ -20,7 +21,6 @@ export function LoginForm({ callbackUrl = "/" }: LoginFormProps) {
   const [state, formAction, isPending] = useActionState(loginAction, null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   const fieldErrors = state && !state.success ? state.fieldErrors : undefined;
 
@@ -60,31 +60,17 @@ export function LoginForm({ callbackUrl = "/" }: LoginFormProps) {
         <Label htmlFor="password" className="text-foreground/85">
           Password
         </Label>
-        <div className="relative">
-          <Input
-            id="password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Enter your password"
-            className={cn(fieldClassName, "pr-12")}
-            aria-invalid={Boolean(fieldErrors?.password?.[0])}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="absolute top-1/2 right-1.5 -translate-y-1/2 text-muted-foreground hover:bg-transparent hover:text-foreground"
-            onClick={() => setShowPassword((visible) => !visible)}
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            aria-pressed={showPassword}
-          >
-            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-          </Button>
-        </div>
+        <PasswordInput
+          id="password"
+          name="password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Enter your password"
+          className={cn(fieldClassName, "pr-12")}
+          aria-invalid={Boolean(fieldErrors?.password?.[0])}
+        />
         {fieldErrors?.password?.[0] && (
           <p className="px-1 text-xs text-destructive">{fieldErrors.password[0]}</p>
         )}

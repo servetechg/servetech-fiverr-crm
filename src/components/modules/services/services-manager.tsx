@@ -15,10 +15,12 @@ import {
 } from "@/app/actions/services";
 import { PageHeader } from "@/components/layout/page-header";
 import { ActiveStatusBadge } from "@/components/shared/active-status-badge";
+import { AdminActiveStatusFilter } from "@/components/shared/admin-active-status-filter";
 import { AdminSearchInput } from "@/components/shared/admin-search-input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTableShell } from "@/components/shared/data-table-shell";
 import { ListPagination } from "@/components/shared/list-pagination";
+import { TABLE_PAGE_SIZE_OPTIONS } from "@/lib/constants/table-pagination";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -74,8 +76,9 @@ export function ServicesManager({ data }: ServicesManagerProps) {
       {
         id: "actions",
         header: "Action",
+        meta: { align: "right" },
         cell: ({ row }) => (
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {row.original.isActive ? (
               <Button
                 type="button"
@@ -182,17 +185,27 @@ export function ServicesManager({ data }: ServicesManagerProps) {
         }
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <AdminSearchInput placeholder="Search services…" />
+        <AdminActiveStatusFilter />
         <p className="text-sm text-muted-foreground sm:ml-auto">{data.total} records</p>
       </div>
 
-      <DataTableShell columns={columns} data={data.items} emptyMessage="No services match your search." />
-      <ListPagination
-        page={data.page}
-        totalPages={data.totalPages}
-        total={data.total}
-        entitySingular="service"
+      <DataTableShell
+        columns={columns}
+        data={data.items}
+        stickyColumnIds={["actions"]}
+        emptyMessage="No services match your search."
+        footer={
+          <ListPagination
+            page={data.page}
+            totalPages={data.totalPages}
+            total={data.total}
+            pageSize={data.pageSize}
+            pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+            entitySingular="service"
+          />
+        }
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -203,7 +216,7 @@ export function ServicesManager({ data }: ServicesManagerProps) {
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="serviceName">Service name</Label>
-              <Input id="serviceName" {...form.register("serviceName")} />
+              <Input id="serviceName" placeholder="e.g. Website redesign" {...form.register("serviceName")} />
               {form.formState.errors.serviceName?.message && (
                 <p className="text-xs text-destructive">{form.formState.errors.serviceName.message}</p>
               )}

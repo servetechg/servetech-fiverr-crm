@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { adminPaginationFields } from "@/lib/validations/admin/active-filter-params";
+import {
+  activeStatusFilterSchema,
+  adminPaginationFields,
+} from "@/lib/validations/admin/active-filter-params";
 
 export const salesTeamListParamsSchema = z.object({
   q: z.string().trim().optional(),
@@ -8,6 +11,7 @@ export const salesTeamListParamsSchema = z.object({
     .enum(["all", "Admin", "Salesperson"])
     .optional()
     .transform((value) => value ?? "all"),
+  status: activeStatusFilterSchema,
   ...adminPaginationFields,
 });
 

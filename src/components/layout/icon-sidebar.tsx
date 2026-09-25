@@ -40,7 +40,7 @@ export function IconSidebar({ user }: IconSidebarProps) {
     >
       <Link
         href="/"
-        className="mb-3 mt-1 flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-sm ring-1 ring-black/5"
+        className="mb-3 mt-1 flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10"
         title={siteConfig.name}
       >
         <Image
@@ -70,10 +70,10 @@ export function IconSidebar({ user }: IconSidebarProps) {
                     aria-label={item.title}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex size-10 shrink-0 items-center justify-center rounded-full transition-colors",
+                      "flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors",
                       active
                         ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:bg-white/55 hover:text-foreground",
+                        : "text-muted-foreground hover:bg-muted/80 hover:text-foreground dark:hover:bg-muted/50",
                     )}
                   >
                     <Icon strokeWidth={1.75} className="size-[1.125rem]" />
@@ -114,7 +114,7 @@ export function IconSidebar({ user }: IconSidebarProps) {
                   type="submit"
                   variant="ghost"
                   size="icon"
-                  className="size-10 rounded-full cursor-pointer text-muted-foreground hover:bg-white/55 hover:text-foreground"
+                  className="size-10 rounded-full text-muted-foreground hover:bg-muted/80 hover:text-foreground dark:hover:bg-muted/50"
                   aria-label="Sign out"
                 >
                   <LogOut className="size-[1.125rem] cursor-pointer" strokeWidth={1.75} />

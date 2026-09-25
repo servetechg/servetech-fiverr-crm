@@ -11,6 +11,7 @@ import { DataTableShell } from "@/components/shared/data-table-shell";
 import { ListPagination } from "@/components/shared/list-pagination";
 import { RowActions } from "@/components/shared/row-actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LEAD_PAGE_SIZE_OPTIONS } from "@/lib/constants/lead-pagination";
 import { formatCurrency } from "@/lib/utils/format";
 import type { PaginatedResult } from "@/types/common/pagination";
 import type { LeadListItem } from "@/types/leads/lead-list-item";
@@ -76,15 +77,23 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
       {
         accessorKey: "fiverrAccountName",
         header: "Account",
-        cell: ({ row }) => row.original.fiverrAccountName,
+        cell: ({ row }) => (
+          <span className="inline-block max-w-[12rem] truncate">{row.original.fiverrAccountName}</span>
+        ),
       },
       {
         accessorKey: "salespersonName",
         header: "Rep",
+        cell: ({ row }) => (
+          <span className="inline-block max-w-[10rem] truncate">{row.original.salespersonName}</span>
+        ),
       },
       {
         accessorKey: "serviceName",
         header: "Service",
+        cell: ({ row }) => (
+          <span className="inline-block max-w-[14rem] truncate">{row.original.serviceName}</span>
+        ),
       },
       {
         accessorKey: "status",
@@ -140,12 +149,15 @@ export function LeadsTableView({ data }: LeadsTableViewProps) {
     <DataTableShell
       columns={columns}
       data={data.items}
+      stickyColumnIds={["actions"]}
       emptyMessage="No leads match your filters."
       footer={
         <ListPagination
           page={data.page}
           totalPages={data.totalPages}
           total={data.total}
+          pageSize={data.pageSize}
+          pageSizeOptions={LEAD_PAGE_SIZE_OPTIONS}
           entitySingular="lead"
         />
       }

@@ -13,6 +13,12 @@ function buildWhere(params: SalesTeamListParams): Prisma.UserWhereInput {
     where.role = params.role as UserRole;
   }
 
+  if (params.status === "active") {
+    where.isActive = true;
+  } else if (params.status === "inactive") {
+    where.isActive = false;
+  }
+
   if (params.q) {
     where.OR = [{ fullName: { contains: params.q } }, { email: { contains: params.q } }];
   }

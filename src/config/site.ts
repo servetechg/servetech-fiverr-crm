@@ -5,5 +5,7 @@ export const siteConfig = {
   logoSrc: "/brand/servetechLogo.png",
   logoAlt: "ServeTech global",
   logoIconSrc: "/brand/servetech-icon.png",
+  /** Circular favicon / app icon (run `npm run icons:generate`) */
+  logoIconRoundedSrc: "/brand/servetech-icon-rounded.png",
   logoIconAlt: "ServeTech",
 } as const;

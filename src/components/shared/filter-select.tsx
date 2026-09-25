@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import {
   Select,
@@ -38,17 +38,17 @@ export function FilterSelect({
     <Select value={value} onValueChange={(next) => next && onValueChange(next)}>
       <SelectTrigger
         className={cn(
-          "relative z-[1] h-9 w-full rounded-full sm:w-[12.5rem]",
+          "relative z-[1] h-9 min-h-9 w-full rounded-full text-sm sm:w-[12rem]",
           isActive &&
             "border-[rgb(195_245_60/0.45)] bg-[rgb(195_245_60/0.1)] ring-1 ring-[rgb(195_245_60/0.22)]",
           className,
         )}
       >
-        <span className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm">
+        <span className="flex min-w-0 flex-1 items-center gap-2 truncate">
           {Icon ? (
             <span
               className={cn(
-                "flex size-6 shrink-0 items-center justify-center rounded-full bg-white/55 text-muted-foreground",
+                "flex size-6 shrink-0 items-center justify-center rounded-full bg-muted/80 text-muted-foreground",
                 isActive && "bg-[rgb(195_245_60/0.25)] text-foreground",
               )}
             >
@@ -64,9 +64,12 @@ export function FilterSelect({
       <SelectContent
         align="start"
         side="bottom"
-        sideOffset={10}
+        sideOffset={8}
         alignItemWithTrigger={false}
-        className={cn("min-w-[13rem]", contentClassName)}
+        className={cn(
+          "!min-w-(--anchor-width) w-(--anchor-width) max-w-(--anchor-width) max-h-56 rounded-xl p-1 shadow-[0_12px_32px_rgb(20_20_20/0.11)]",
+          contentClassName,
+        )}
       >
         {children}
       </SelectContent>
@@ -74,4 +77,19 @@ export function FilterSelect({
   );
 }
 
-export { SelectItem as FilterSelectItem };
+export function FilterSelectItem({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof SelectItem>) {
+  return (
+    <SelectItem
+      className={cn("rounded-lg py-2 pr-8 pl-2.5 text-sm", className)}
+      {...props}
+    >
+      <span className="block max-w-full truncate" title={typeof children === "string" ? children : undefined}>
+        {children}
+      </span>
+    </SelectItem>
+  );
+}

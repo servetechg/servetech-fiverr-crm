@@ -64,7 +64,7 @@ export function LeadsFilters({ filterOptions, user }: LeadsFiltersProps) {
       : (filterOptions.salespeople.find((option) => String(option.id) === repParam)?.label ?? "All");
 
   return (
-    <div className="glass-surface rounded-2xl border-white/55 p-3 ring-1 ring-white/40 sm:rounded-[1.25rem] sm:p-4">
+    <div className="glass-surface rounded-2xl border-border/50 p-3 ring-1 ring-border/40 sm:rounded-[1.25rem] sm:p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
         <LeadsSearchInput />
         <FilterSelect
@@ -89,7 +89,6 @@ export function LeadsFilters({ filterOptions, user }: LeadsFiltersProps) {
           displayValue={priorityDisplay}
           isActive={priorityParam !== "all"}
           onValueChange={(value) => setParam("priority", value)}
-          className="sm:w-[11.5rem]"
         >
           <FilterSelectItem value="all">All priorities</FilterSelectItem>
           {LEAD_PRIORITY_OPTIONS.map((option) => (
