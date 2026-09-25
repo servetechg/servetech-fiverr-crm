@@ -11,5 +11,5 @@ type LeadsTableSectionProps = {
 export async function LeadsTableSection({ user, searchParams }: LeadsTableSectionProps) {
   const params = parseLeadListParams(searchParams);
   const data = await listLeads(user, params);
-  return <LeadsTableView data={data} />;
+  return <LeadsTableView data={data} user={user} />;
 }

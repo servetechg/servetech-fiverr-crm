@@ -9,15 +9,13 @@ import { DateRangeFilter } from "@/components/layout/date-range-filter";
 import { LeadsSearchInput } from "@/components/modules/leads/leads-search-input";
 import { FilterSelect, FilterSelectItem } from "@/components/shared/filter-select";
 import { LEAD_PRIORITY_LABELS, LEAD_PRIORITY_OPTIONS, LEAD_STATUS_LABELS, LEAD_STATUS_OPTIONS } from "@/lib/constants/leads";
-import type { SessionUser } from "@/types/common/session-user";
 import type { LeadFilterOptions } from "@/types/leads/lead-filter-options";
 
 type LeadsFiltersProps = {
   filterOptions: LeadFilterOptions;
-  user: SessionUser;
 };
 
-export function LeadsFilters({ filterOptions, user }: LeadsFiltersProps) {
+export function LeadsFilters({ filterOptions }: LeadsFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -127,23 +125,21 @@ export function LeadsFilters({ filterOptions, user }: LeadsFiltersProps) {
             </FilterSelectItem>
           ))}
         </FilterSelect>
-        {user.role === "Admin" ? (
-          <FilterSelect
-            label="Rep"
-            icon={Users}
-            value={repParam}
-            displayValue={repDisplay}
-            isActive={repParam !== "all"}
-            onValueChange={(value) => setParam("salespersonId", value)}
-          >
-            <FilterSelectItem value="all">All reps</FilterSelectItem>
-            {filterOptions.salespeople.map((option) => (
-              <FilterSelectItem key={option.id} value={String(option.id)}>
-                {option.label}
-              </FilterSelectItem>
-            ))}
-          </FilterSelect>
-        ) : null}
+        <FilterSelect
+          label="Rep"
+          icon={Users}
+          value={repParam}
+          displayValue={repDisplay}
+          isActive={repParam !== "all"}
+          onValueChange={(value) => setParam("salespersonId", value)}
+        >
+          <FilterSelectItem value="all">All reps</FilterSelectItem>
+          {filterOptions.salespeople.map((option) => (
+            <FilterSelectItem key={option.id} value={String(option.id)}>
+              {option.label}
+            </FilterSelectItem>
+          ))}
+        </FilterSelect>
         <DateRangeFilter labeled icon={CalendarRange} />
       </div>
     </div>
