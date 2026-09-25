@@ -1,6 +1,7 @@
 import { LeadPriority, LeadStatus } from "@prisma/client";
 import { z } from "zod";
 
+import { parseLeadPageSize } from "@/lib/constants/lead-pagination";
 import { isDateRangePreset } from "@/lib/utils/date-range";
 
 const optionalInt = z
@@ -52,7 +53,7 @@ export const leadListParamsSchema = z.object({
   pageSize: z
     .string()
     .optional()
-    .transform((value) => Math.min(100, Math.max(1, Number.parseInt(value ?? "20", 10) || 20))),
+    .transform((value) => parseLeadPageSize(value)),
 });
 
 export type LeadListParams = z.infer<typeof leadListParamsSchema>;

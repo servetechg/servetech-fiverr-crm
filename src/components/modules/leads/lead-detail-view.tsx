@@ -16,6 +16,7 @@ import { ChatProofTableCell } from "@/components/modules/leads/chat-proof-table-
 import { LeadPriorityBadge, LeadStatusBadge } from "@/components/modules/leads/lead-badges";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateTimeDisplay } from "@/lib/utils/date-input";
 import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import type { LeadDetail } from "@/types/leads/lead-detail";
@@ -62,13 +63,6 @@ function DetailSection({ title, children }: DetailSectionProps) {
       <div className="mt-3">{children}</div>
     </section>
   );
-}
-
-function formatActivityTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
 }
 
 export function LeadDetailView({ lead }: LeadDetailViewProps) {
@@ -215,7 +209,7 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
                       />
                       <div className="min-w-0 flex-1 rounded-2xl border border-white/50 bg-white/35 p-3.5">
                         <p className="text-xs text-muted-foreground">
-                          {formatActivityTime(activity.activityTime)}
+                          {formatDateTimeDisplay(activity.activityTime)}
                           <span className="text-muted-foreground/70"> · </span>
                           <span className="font-medium text-foreground/75">{activity.userName}</span>
                         </p>

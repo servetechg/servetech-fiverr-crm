@@ -1,9 +1,10 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { SearchInputIcon } from "@/components/shared/search-input-icon";
 import { Input } from "@/components/ui/input";
 import { cn } from "cn";
 
@@ -57,18 +58,18 @@ export function AdminSearchInput({
 
   return (
     <div className={cn("relative min-w-0 flex-1 sm:max-w-xs", className)}>
-      <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+      <SearchInputIcon />
       <Input
         value={value}
         onChange={(event) => setLocalOverride(event.target.value)}
         placeholder={placeholder}
-        className="h-9 rounded-full pl-9 pr-9"
+        className="relative h-9 rounded-full pr-9 pl-10"
         aria-label="Search"
       />
       {value.length > 0 ? (
         <button
           type="button"
-          className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
+          className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer rounded-full p-0.5 text-muted-foreground hover:text-foreground"
           aria-label="Clear search"
           onClick={() => setLocalOverride("")}
         >

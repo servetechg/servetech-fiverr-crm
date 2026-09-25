@@ -219,7 +219,7 @@ export function ChatProofViewer({
               </>
             ) : null}
 
-            <div className="size-full overflow-auto p-4 sm:p-8">
+            <div className="scroll-surface size-full overflow-auto p-4 sm:p-8">
               <div
                 className="mx-auto flex min-h-full w-full items-center justify-center"
                 style={{
@@ -249,7 +249,7 @@ export function ChatProofViewer({
 
           {hasMultiple ? (
             <footer className="shrink-0 border-t border-white/10 bg-[#111b21] px-4 py-3">
-              <ul className="mx-auto flex max-w-3xl items-center justify-center gap-2 overflow-x-auto pb-1">
+              <ul className="scroll-surface mx-auto flex max-w-3xl items-center justify-center gap-2 overflow-x-auto pb-1">
                 {proof.urls.map((url, index) => (
                   <li key={url}>
                     <button
