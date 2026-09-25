@@ -46,10 +46,12 @@ export async function upsertLeadAction(raw: unknown): Promise<ActionResult<null>
     if (parsed.data.id) {
       await updateLead(user, { ...parsed.data, id: parsed.data.id });
       revalidatePath("/leads");
+      revalidatePath("/activities");
       revalidatePath(`/leads/${parsed.data.id}`);
     } else {
       await createLeadFull(user, parsed.data);
       revalidatePath("/leads");
+      revalidatePath("/activities");
     }
     return actionSuccess(null);
   } catch (error) {
@@ -72,6 +74,7 @@ export async function deleteLeadAction(raw: unknown): Promise<ActionResult<null>
   try {
     await deleteLead(user, parsed.data.id);
     revalidatePath("/leads");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not delete lead.";

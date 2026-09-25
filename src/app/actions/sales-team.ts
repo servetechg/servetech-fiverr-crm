@@ -40,6 +40,7 @@ export async function upsertTeamMemberAction(raw: unknown): Promise<ActionResult
       await createTeamMember(user, parsed.data);
     }
     revalidatePath("/sales-team");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not save team member.";
@@ -64,6 +65,7 @@ export async function deleteTeamMemberAction(raw: unknown): Promise<ActionResult
   try {
     await deleteTeamMember(user, parsed.data.id);
     revalidatePath("/sales-team");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not delete team member.";

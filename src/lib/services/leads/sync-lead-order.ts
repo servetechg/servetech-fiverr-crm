@@ -1,8 +1,9 @@
-import type { OrderStatus } from "@prisma/client";
+import { AuditCategory, type OrderStatus } from "@prisma/client";
 import { addDays, startOfDay } from "date-fns";
 
 import { prisma } from "@/lib/db/prisma";
 import { generateNextOrderNumber } from "@/lib/services/orders/generate-order-number";
+import { recordAuditEvent } from "@/lib/services/audit/record-audit-event";
 
 export type LeadOrderSyncInput = {
   leadId: number;
@@ -12,6 +13,7 @@ export type LeadOrderSyncInput = {
   orderValue: number;
   orderStatus: OrderStatus;
   upsellEligible: boolean;
+  actorUserId: number;
 };
 
 export async function syncLeadPrimaryOrder(input: LeadOrderSyncInput): Promise<void> {
@@ -21,7 +23,7 @@ export async function syncLeadPrimaryOrder(input: LeadOrderSyncInput): Promise<v
   const existing = await prisma.order.findFirst({
     where: { leadId: input.leadId },
     orderBy: { createdAt: "asc" },
-    select: { id: true },
+    select: { id: true, orderNumber: true },
   });
 
   if (existing) {
@@ -35,10 +37,21 @@ export async function syncLeadPrimaryOrder(input: LeadOrderSyncInput): Promise<v
         serviceId: input.serviceId,
       },
     });
+
+    await recordAuditEvent({
+      userId: input.actorUserId,
+      category: AuditCategory.Order,
+      action: "update",
+      summary: "Order updated from lead",
+      details: `Order ${existing.orderNumber} synced with lead order details.`,
+      leadId: input.leadId,
+      entityLabel: existing.orderNumber,
+    });
   } else {
+    const orderNumber = await generateNextOrderNumber();
     await prisma.order.create({
       data: {
-        orderNumber: await generateNextOrderNumber(),
+        orderNumber,
         leadId: input.leadId,
         fiverrAccountId: input.fiverrAccountId,
         salespersonId: input.salespersonId,
@@ -48,6 +61,16 @@ export async function syncLeadPrimaryOrder(input: LeadOrderSyncInput): Promise<v
         deliveryDate,
         status: input.orderStatus,
       },
+    });
+
+    await recordAuditEvent({
+      userId: input.actorUserId,
+      category: AuditCategory.Order,
+      action: "create",
+      summary: "Order created from lead",
+      details: `Order ${orderNumber} linked to lead.`,
+      leadId: input.leadId,
+      entityLabel: orderNumber,
     });
   }
 

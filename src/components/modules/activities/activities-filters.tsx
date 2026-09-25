@@ -5,11 +5,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
 import {
-  ACTIVITY_DIRECTION_LABELS,
-  ACTIVITY_DIRECTION_OPTIONS,
-  ACTIVITY_TYPE_LABELS,
-  ACTIVITY_TYPE_OPTIONS,
-} from "@/lib/constants/activities";
+  AUDIT_CATEGORY_LABELS,
+  AUDIT_CATEGORY_OPTIONS,
+} from "@/lib/constants/audit";
 import { isAdmin } from "@/lib/auth/rbac";
 import {
   DATE_RANGE_PRESETS,
@@ -24,7 +22,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import type { SessionUser } from "@/types/common/session-user";
-import type { ActivityFormOptions } from "@/types/activities/activity-list-item";
+import type { ActivityFilterOptions } from "@/types/activities/activity-list-item";
 
 const RANGE_LABELS: Record<DateRangePreset, string> = {
   all_time: "All Time",
@@ -39,7 +37,7 @@ const RANGE_LABELS: Record<DateRangePreset, string> = {
 
 type ActivitiesFiltersProps = {
   user: SessionUser;
-  formOptions: ActivityFormOptions;
+  filterOptions: ActivityFilterOptions;
 };
 
 function FilterSelect({
@@ -68,7 +66,7 @@ function FilterSelect({
   );
 }
 
-export function ActivitiesFilters({ user, formOptions }: ActivitiesFiltersProps) {
+export function ActivitiesFilters({ user, filterOptions }: ActivitiesFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -90,13 +88,12 @@ export function ActivitiesFilters({ user, formOptions }: ActivitiesFiltersProps)
   const rangeParam = searchParams.get("range") ?? "all_time";
   const rangeValue: DateRangePreset =
     isDateRangePreset(rangeParam) ? rangeParam : "all_time";
-  const typeParam = searchParams.get("type") ?? "all";
-  const directionParam = searchParams.get("direction") ?? "all";
+  const categoryParam = searchParams.get("category") ?? "all";
   const repParam = searchParams.get("salespersonId") ?? "all";
 
   return (
     <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center">
-      <AdminSearchInput placeholder="Search notes, lead, or client…" className="xl:max-w-sm" />
+      <AdminSearchInput placeholder="Search events, users, or leads…" className="xl:max-w-sm" />
       <FilterSelect
         label="Time"
         value={rangeValue}
@@ -110,54 +107,37 @@ export function ActivitiesFilters({ user, formOptions }: ActivitiesFiltersProps)
         ))}
       </FilterSelect>
       <FilterSelect
-        label="Type"
-        value={typeParam}
+        label="Module"
+        value={categoryParam}
         displayValue={
-          typeParam === "all"
+          categoryParam === "all"
             ? "All"
-            : ACTIVITY_TYPE_LABELS[typeParam as keyof typeof ACTIVITY_TYPE_LABELS] ?? typeParam
+            : AUDIT_CATEGORY_LABELS[categoryParam as keyof typeof AUDIT_CATEGORY_LABELS] ??
+              categoryParam
         }
-        onValueChange={(value) => setParam("type", value)}
+        onValueChange={(value) => setParam("category", value)}
       >
         <SelectItem value="all">All</SelectItem>
-        {ACTIVITY_TYPE_OPTIONS.map((type) => (
-          <SelectItem key={type} value={type}>
-            {ACTIVITY_TYPE_LABELS[type]}
-          </SelectItem>
-        ))}
-      </FilterSelect>
-      <FilterSelect
-        label="Direction"
-        value={directionParam}
-        displayValue={
-          directionParam === "all"
-            ? "All"
-            : ACTIVITY_DIRECTION_LABELS[directionParam as keyof typeof ACTIVITY_DIRECTION_LABELS] ??
-              directionParam
-        }
-        onValueChange={(value) => setParam("direction", value)}
-      >
-        <SelectItem value="all">All</SelectItem>
-        {ACTIVITY_DIRECTION_OPTIONS.map((direction) => (
-          <SelectItem key={direction} value={direction}>
-            {ACTIVITY_DIRECTION_LABELS[direction]}
+        {AUDIT_CATEGORY_OPTIONS.map((category) => (
+          <SelectItem key={category} value={category}>
+            {AUDIT_CATEGORY_LABELS[category]}
           </SelectItem>
         ))}
       </FilterSelect>
       {isAdmin(user) ? (
         <FilterSelect
-          label="Rep"
+          label="User"
           value={repParam}
           displayValue={
             repParam === "all"
               ? "All"
-              : (formOptions.salespeople.find((rep) => String(rep.id) === repParam)?.fullName ??
+              : (filterOptions.salespeople.find((rep) => String(rep.id) === repParam)?.fullName ??
                 "All")
           }
           onValueChange={(value) => setParam("salespersonId", value)}
         >
           <SelectItem value="all">All</SelectItem>
-          {formOptions.salespeople.map((rep) => (
+          {filterOptions.salespeople.map((rep) => (
             <SelectItem key={rep.id} value={String(rep.id)}>
               {rep.fullName}
             </SelectItem>

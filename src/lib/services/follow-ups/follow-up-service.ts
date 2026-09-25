@@ -1,4 +1,8 @@
+import { AuditCategory } from "@prisma/client";
+
 import { prisma } from "@/lib/db/prisma";
+import { FOLLOW_UP_STATUS_LABELS } from "@/lib/constants/follow-ups";
+import { recordAuditEvent } from "@/lib/services/audit/record-audit-event";
 import { canMutateLead } from "@/lib/auth/lead-scope";
 import { isAdmin } from "@/lib/auth/rbac";
 import type { FollowUpFormInput } from "@/lib/validations/follow-ups/follow-up-form-schema";
@@ -52,6 +56,16 @@ export async function createFollowUp(
   const created = await prisma.followUp.create({
     data: mapFollowUpData(input),
   });
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.FollowUp,
+    action: "create",
+    summary: "Follow-up scheduled",
+    details: input.description.trim(),
+    leadId: input.leadId,
+  });
+
   return { id: created.id };
 }
 
@@ -79,11 +93,35 @@ export async function updateFollowUp(
     where: { id: input.id },
     data: mapFollowUpData(input),
   });
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.FollowUp,
+    action: "update",
+    summary: "Follow-up updated",
+    details: `${input.description.trim()} · Status: ${FOLLOW_UP_STATUS_LABELS[input.status]}.`,
+    leadId: input.leadId,
+  });
 }
 
 export async function deleteFollowUp(user: SessionUser, id: number): Promise<void> {
+  const existing = await prisma.followUp.findUnique({
+    where: { id },
+    select: { leadId: true, description: true },
+  });
   await assertFollowUpAccess(user, id);
   await prisma.followUp.delete({ where: { id } });
+
+  if (existing) {
+    await recordAuditEvent({
+      userId: user.id,
+      category: AuditCategory.FollowUp,
+      action: "delete",
+      summary: "Follow-up removed",
+      details: existing.description,
+      leadId: existing.leadId,
+    });
+  }
 }
 
 export async function moveFollowUpBoard(
@@ -92,6 +130,11 @@ export async function moveFollowUpBoard(
 ): Promise<void> {
   await assertFollowUpAccess(user, input.id);
 
+  const existing = await prisma.followUp.findUnique({
+    where: { id: input.id },
+    select: { leadId: true, description: true },
+  });
+
   await prisma.followUp.update({
     where: { id: input.id },
     data: {
@@ -99,4 +142,15 @@ export async function moveFollowUpBoard(
       scheduledTime: parseDateOnlyForDb(input.scheduledDate),
     },
   });
+
+  if (existing) {
+    await recordAuditEvent({
+      userId: user.id,
+      category: AuditCategory.FollowUp,
+      action: "move",
+      summary: "Follow-up moved on board",
+      details: `${existing.description} · ${FOLLOW_UP_STATUS_LABELS[input.status]} · ${input.scheduledDate}.`,
+      leadId: existing.leadId,
+    });
+  }
 }

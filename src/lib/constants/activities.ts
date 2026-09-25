@@ -29,7 +29,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   OrderCompleted: "Order Completed",
   OrderCancelled: "Order Cancelled",
   Lost: "Lost",
-  CustomNote: "Custom Note",
+  CustomNote: "System event",
 };
 
 export const ACTIVITY_DIRECTION_OPTIONS: ActivityDirection[] = [

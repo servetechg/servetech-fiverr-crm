@@ -1,23 +1,21 @@
-import type { ActivityDirection, ActivityType } from "@prisma/client";
+import type { AuditCategory, UserRole } from "@prisma/client";
 
 export type ActivityListItem = {
   id: number;
-  leadId: number;
-  leadCustomId: string;
-  clientLabel: string;
   userId: number;
   repName: string;
-  activityType: ActivityType;
-  direction: ActivityDirection;
-  responseTimeMinutes: number | null;
-  messageCategory: string | null;
-  actionTaken: string | null;
-  upsellMentioned: boolean;
-  notes: string;
-  activityTime: string;
+  userRole: UserRole;
+  category: AuditCategory;
+  action: string;
+  summary: string;
+  details: string | null;
+  leadId: number | null;
+  leadCustomId: string | null;
+  clientLabel: string | null;
+  entityLabel: string | null;
+  occurredAt: string;
 };
 
-export type ActivityFormOptions = {
-  leads: { id: number; leadCustomId: string; label: string }[];
+export type ActivityFilterOptions = {
   salespeople: { id: number; fullName: string }[];
 };

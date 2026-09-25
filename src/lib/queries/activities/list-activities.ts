@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
-import { activityScopeWhere } from "@/lib/auth/activity-scope";
+import { auditScopeWhere } from "@/lib/auth/audit-scope";
 import { isAdmin } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/db/prisma";
 import { buildPaginatedResult, paginationSkip } from "@/lib/utils/pagination";
@@ -10,30 +10,32 @@ import type { PaginatedResult } from "@/types/common/pagination";
 import type { SessionUser } from "@/types/common/session-user";
 import type { ActivityListItem } from "@/types/activities/activity-list-item";
 
-function buildWhere(user: SessionUser, params: ActivityListParams): Prisma.ActivityWhereInput {
-  const scope = activityScopeWhere(user);
+function buildWhere(user: SessionUser, params: ActivityListParams): Prisma.AuditLogWhereInput {
+  const scope = auditScopeWhere(user);
   const range = resolveDateRange(params.range, params.from, params.to);
 
-  let salespersonFilter: number | undefined;
+  let userFilter: number | undefined;
   if (params.salespersonId) {
     if (isAdmin(user) || params.salespersonId === user.id) {
-      salespersonFilter = params.salespersonId;
+      userFilter = params.salespersonId;
     } else if (!isAdmin(user)) {
-      salespersonFilter = user.id;
+      userFilter = user.id;
     }
   }
 
-  const where: Prisma.ActivityWhereInput = {
+  const where: Prisma.AuditLogWhereInput = {
     ...scope,
-    ...(params.type ? { activityType: params.type } : {}),
-    ...(params.direction ? { direction: params.direction } : {}),
-    ...(salespersonFilter ? { userId: salespersonFilter } : {}),
+    ...(params.category ? { category: params.category } : {}),
+    ...(userFilter ? { userId: userFilter } : {}),
     ...(params.q
       ? {
           OR: [
-            { notes: { contains: params.q } },
-            { messageCategory: { contains: params.q } },
-            { actionTaken: { contains: params.q } },
+            { summary: { contains: params.q } },
+            { details: { contains: params.q } },
+            { action: { contains: params.q } },
+            { entityLabel: { contains: params.q } },
+            { user: { fullName: { contains: params.q } } },
+            { user: { email: { contains: params.q } } },
             { lead: { leadCustomId: { contains: params.q } } },
             { lead: { clientName: { contains: params.q } } },
             { lead: { fiverrUsername: { contains: params.q } } },
@@ -43,7 +45,7 @@ function buildWhere(user: SessionUser, params: ActivityListParams): Prisma.Activ
   };
 
   if (range.from && range.to) {
-    where.activityTime = { gte: range.from, lte: range.to };
+    where.createdAt = { gte: range.from, lte: range.to };
   }
 
   return where;
@@ -51,34 +53,35 @@ function buildWhere(user: SessionUser, params: ActivityListParams): Prisma.Activ
 
 function mapRow(row: {
   id: number;
-  leadId: number;
   userId: number;
-  activityType: ActivityListItem["activityType"];
-  direction: ActivityListItem["direction"];
-  responseTimeMinutes: number | null;
-  messageCategory: string | null;
-  actionTaken: string | null;
-  upsellMentioned: boolean;
-  notes: string;
-  activityTime: Date;
-  lead: { leadCustomId: string; clientName: string | null; fiverrUsername: string };
-  user: { fullName: string };
+  category: ActivityListItem["category"];
+  action: string;
+  summary: string;
+  details: string | null;
+  leadId: number | null;
+  entityLabel: string | null;
+  createdAt: Date;
+  lead: {
+    leadCustomId: string;
+    clientName: string | null;
+    fiverrUsername: string;
+  } | null;
+  user: { fullName: string; role: ActivityListItem["userRole"] };
 }): ActivityListItem {
   return {
     id: row.id,
-    leadId: row.leadId,
-    leadCustomId: row.lead.leadCustomId,
-    clientLabel: row.lead.clientName ?? row.lead.fiverrUsername,
     userId: row.userId,
     repName: row.user.fullName,
-    activityType: row.activityType,
-    direction: row.direction,
-    responseTimeMinutes: row.responseTimeMinutes,
-    messageCategory: row.messageCategory,
-    actionTaken: row.actionTaken,
-    upsellMentioned: row.upsellMentioned,
-    notes: row.notes,
-    activityTime: row.activityTime.toISOString(),
+    userRole: row.user.role,
+    category: row.category,
+    action: row.action,
+    summary: row.summary,
+    details: row.details,
+    leadId: row.leadId,
+    leadCustomId: row.lead?.leadCustomId ?? null,
+    clientLabel: row.lead ? (row.lead.clientName ?? row.lead.fiverrUsername) : null,
+    entityLabel: row.entityLabel,
+    occurredAt: row.createdAt.toISOString(),
   };
 }
 
@@ -90,15 +93,15 @@ export async function listActivitiesPaginated(
   const pagination = { page: params.page, pageSize: params.pageSize };
 
   const [total, rows] = await Promise.all([
-    prisma.activity.count({ where }),
-    prisma.activity.findMany({
+    prisma.auditLog.count({ where }),
+    prisma.auditLog.findMany({
       where,
-      orderBy: [{ activityTime: "desc" }, { id: "desc" }],
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       skip: paginationSkip(pagination),
       take: params.pageSize,
       include: {
         lead: { select: { leadCustomId: true, clientName: true, fiverrUsername: true } },
-        user: { select: { fullName: true } },
+        user: { select: { fullName: true, role: true } },
       },
     }),
   ]);

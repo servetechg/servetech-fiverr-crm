@@ -180,7 +180,7 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
 
         <Card className="glass-surface gap-0 overflow-hidden rounded-[1.75rem] border-white/60 py-0 ring-1 ring-white/40">
           <CardHeader className="border-b border-white/50 px-5 py-4 sm:px-6">
-            <CardTitle className="text-base font-semibold tracking-tight">Activity</CardTitle>
+            <CardTitle className="text-base font-semibold tracking-tight">Activity log</CardTitle>
           </CardHeader>
           <CardContent className="px-5 py-5 sm:px-6 sm:py-6">
             {lead.activities.length === 0 ? (
@@ -188,7 +188,7 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
                 <MessageSquareText className="size-8 text-muted-foreground/50" aria-hidden />
                 <p className="mt-3 text-sm font-medium text-foreground/80">No activity yet</p>
                 <p className="mt-1 max-w-[14rem] text-xs leading-relaxed text-muted-foreground">
-                  Notes and touchpoints will show up here as your team logs them.
+                  CRM actions on this lead are recorded automatically.
                 </p>
               </div>
             ) : (
@@ -213,7 +213,14 @@ export function LeadDetailView({ lead }: LeadDetailViewProps) {
                           <span className="text-muted-foreground/70"> · </span>
                           <span className="font-medium text-foreground/75">{activity.userName}</span>
                         </p>
-                        <p className="mt-2 text-sm leading-relaxed text-foreground/90">{activity.notes}</p>
+                        <p className="mt-1.5 text-sm font-medium text-foreground/90">
+                          {activity.summary}
+                        </p>
+                        {activity.details ? (
+                          <p className="mt-1 text-sm leading-relaxed text-foreground/80">
+                            {activity.details}
+                          </p>
+                        ) : null}
                       </div>
                     </li>
                   );

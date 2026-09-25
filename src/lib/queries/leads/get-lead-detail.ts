@@ -24,8 +24,8 @@ export async function getLeadDetail(user: SessionUser, id: number): Promise<Lead
         take: 1,
         select: { frontRevenue: true },
       },
-      activities: {
-        orderBy: { activityTime: "desc" },
+      auditLogs: {
+        orderBy: { createdAt: "desc" },
         include: { user: { select: { fullName: true } } },
       },
     },
@@ -60,12 +60,13 @@ export async function getLeadDetail(user: SessionUser, id: number): Promise<Lead
     lostReason: lostReasonDisplay(lead.lostReason),
     lostChatProof: parseLostChatProof(lead.lostChatProof),
     upsellEligible: lead.upsellEligible,
-    activities: lead.activities.map((activity) => ({
-      id: activity.id,
-      notes: activity.notes,
-      activityType: activity.activityType,
-      activityTime: activity.activityTime.toISOString(),
-      userName: activity.user.fullName,
+    activities: lead.auditLogs.map((entry) => ({
+      id: entry.id,
+      summary: entry.summary,
+      details: entry.details,
+      category: entry.category,
+      activityTime: entry.createdAt.toISOString(),
+      userName: entry.user.fullName,
     })),
   };
 }

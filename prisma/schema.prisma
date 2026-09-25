@@ -79,6 +79,19 @@ enum FollowUpStatus {
   Completed
 }
 
+enum AuditCategory {
+  Auth
+  Lead
+  FollowUp
+  Order
+  Upsell
+  FiverrAccount
+  Team
+  Service
+  Data
+  System
+}
+
 model User {
   id             Int      @id @default(autoincrement())
   fullName       String   @map("full_name")
@@ -92,6 +105,7 @@ model User {
 
   leadsAssigned Lead[]     @relation("LeadSalesperson")
   activities    Activity[]
+  auditLogs     AuditLog[]
   followUps     FollowUp[] @relation("FollowUpSalesperson")
   upsellsOffered Upsell[]  @relation("UpsellOfferedBy")
   ordersAssigned Order[]   @relation("OrderSalesperson")
@@ -173,6 +187,7 @@ model Lead {
   salesperson   User          @relation("LeadSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict)
   service       Service       @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   activities    Activity[]
+  auditLogs     AuditLog[]
   orders        Order[]
   followUps     FollowUp[]
   upsells       Upsell[]
@@ -204,6 +219,27 @@ model Activity {
   @@index([leadId])
   @@index([activityTime])
   @@map("activities")
+}
+
+model AuditLog {
+  id          Int           @id @default(autoincrement())
+  userId      Int           @map("user_id")
+  category    AuditCategory
+  action      String        @db.VarChar(64)
+  summary     String        @db.VarChar(500)
+  details     String?       @db.Text
+  leadId      Int?          @map("lead_id")
+  entityLabel String?       @map("entity_label") @db.VarChar(255)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([leadId])
+  @@index([category])
+  @@map("audit_logs")
 }
 
 model Order {

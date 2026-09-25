@@ -40,6 +40,7 @@ export async function upsertFiverrAccountAction(raw: unknown): Promise<ActionRes
       await createFiverrAccount(user, parsed.data);
     }
     revalidatePath("/fiverr-accounts");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not save account.";
@@ -64,6 +65,7 @@ export async function deleteFiverrAccountAction(raw: unknown): Promise<ActionRes
   try {
     await deleteFiverrAccount(user, parsed.data.id);
     revalidatePath("/fiverr-accounts");
+    revalidatePath("/activities");
     return actionSuccess(null);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not delete account.";

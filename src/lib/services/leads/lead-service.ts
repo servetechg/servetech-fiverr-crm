@@ -1,4 +1,4 @@
-import { ActivityType, LeadStatus, Prisma } from "@prisma/client";
+import { AuditCategory, LeadStatus, Prisma } from "@prisma/client";
 import type { LeadPriority } from "@prisma/client";
 import { startOfDay } from "date-fns";
 
@@ -6,6 +6,7 @@ import { canMutateLead } from "@/lib/auth/lead-scope";
 import { LOST_REASON_LABELS } from "@/lib/constants/lost-reasons";
 import { LEAD_STATUS_LABELS } from "@/lib/constants/leads";
 import { prisma } from "@/lib/db/prisma";
+import { recordAuditEvent } from "@/lib/services/audit/record-audit-event";
 import { generateNextLeadCustomId } from "@/lib/services/leads/generate-lead-custom-id";
 import { syncLeadPrimaryOrder } from "@/lib/services/leads/sync-lead-order";
 import type { LeadFormInput } from "@/lib/validations/leads/lead-form-schema";
@@ -40,26 +41,10 @@ function lostProofForSave(
   return proof;
 }
 
-async function logActivity(
-  leadId: number,
-  userId: number,
-  notes: string,
-  activityType: ActivityType = ActivityType.CustomNote,
-): Promise<void> {
-  await prisma.activity.create({
-    data: {
-      leadId,
-      userId,
-      notes,
-      activityType,
-      direction: "Internal",
-    },
-  });
-}
-
 async function applyOrderReceivedSideEffects(
   leadId: number,
   input: LeadFormInput,
+  actorUserId: number,
 ): Promise<void> {
   if (input.status !== LeadStatus.OrderReceived) {
     return;
@@ -76,6 +61,7 @@ async function applyOrderReceivedSideEffects(
     orderValue: input.orderValue,
     orderStatus: input.orderStatus,
     upsellEligible: input.upsellEligible ?? false,
+    actorUserId,
   });
 }
 
@@ -111,7 +97,17 @@ export async function createLeadFull(
     },
   });
 
-  await applyOrderReceivedSideEffects(created.id, input);
+  await applyOrderReceivedSideEffects(created.id, input, user.id);
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.Lead,
+    action: "create",
+    summary: "Lead created",
+    details: `Lead ${leadCustomId} was added to the pipeline.`,
+    leadId: created.id,
+    entityLabel: leadCustomId,
+  });
 
   return { id: created.id };
 }
@@ -119,7 +115,7 @@ export async function createLeadFull(
 export async function updateLead(user: SessionUser, input: LeadFormInput & { id: number }): Promise<void> {
   const existing = await prisma.lead.findUnique({
     where: { id: input.id },
-    select: { salespersonId: true, status: true },
+    select: { salespersonId: true, status: true, leadCustomId: true },
   });
 
   if (!existing) {
@@ -156,21 +152,35 @@ export async function updateLead(user: SessionUser, input: LeadFormInput & { id:
     },
   });
 
-  await applyOrderReceivedSideEffects(input.id, input);
+  await applyOrderReceivedSideEffects(input.id, input, user.id);
 
   if (existing.status !== input.status) {
-    await logActivity(
-      input.id,
-      user.id,
-      `Status changed from ${LEAD_STATUS_LABELS[existing.status]} to ${LEAD_STATUS_LABELS[input.status]}.`,
-    );
+    await recordAuditEvent({
+      userId: user.id,
+      category: AuditCategory.Lead,
+      action: "status_change",
+      summary: "Lead status changed",
+      details: `Status updated from ${LEAD_STATUS_LABELS[existing.status]} to ${LEAD_STATUS_LABELS[input.status]}.`,
+      leadId: input.id,
+      entityLabel: existing.leadCustomId,
+    });
+  } else {
+    await recordAuditEvent({
+      userId: user.id,
+      category: AuditCategory.Lead,
+      action: "update",
+      summary: "Lead updated",
+      details: "Lead details were saved.",
+      leadId: input.id,
+      entityLabel: existing.leadCustomId,
+    });
   }
 }
 
 export async function deleteLead(user: SessionUser, id: number): Promise<void> {
   const existing = await prisma.lead.findUnique({
     where: { id },
-    select: { salespersonId: true },
+    select: { salespersonId: true, leadCustomId: true },
   });
 
   if (!existing) {
@@ -180,6 +190,15 @@ export async function deleteLead(user: SessionUser, id: number): Promise<void> {
   if (!canMutateLead(user, existing.salespersonId)) {
     throw new Error("Forbidden");
   }
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.Lead,
+    action: "delete",
+    summary: "Lead deleted",
+    details: `Lead ${existing.leadCustomId} was removed from the CRM.`,
+    entityLabel: existing.leadCustomId,
+  });
 
   try {
     await prisma.lead.delete({ where: { id } });
@@ -269,6 +288,14 @@ export async function importLeadsFromRows(
     });
     imported += 1;
   }
+
+  await recordAuditEvent({
+    userId: user.id,
+    category: AuditCategory.Data,
+    action: "import",
+    summary: "Leads imported from CSV",
+    details: `${imported} row(s) processed.`,
+  });
 
   return { imported };
 }
