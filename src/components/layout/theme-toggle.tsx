@@ -1,10 +1,10 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
+import { useIsClient } from "@/hooks/use-is-client";
 import {
   Tooltip,
   TooltipContent,
@@ -19,11 +19,7 @@ type ThemeToggleProps = {
 
 export function ThemeToggle({ className, tooltipSide = "top" }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
 
   const isDark = mounted && resolvedTheme === "dark";
 
